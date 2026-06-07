@@ -1,0 +1,134 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.card h1 {
+  font-size: 1.6rem;
+  margin: 0 0 6px;
+  color: #1f6f43;
+}
+
+.subtitle {
+  margin: 0 0 28px;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.btn {
+  border: none;
+  border-radius: 12px;
+  padding: 16px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.15s ease;
+  width: 100%;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-start {
+  background: #1f6f43;
+  color: #fff;
+}
+
+.btn-stop {
+  background: #d64545;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.counting {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+}
+
+.counting label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.counting input {
+  font-size: 1.4rem;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid #d1d5db;
+  text-align: center;
+}
+
+.counting input:focus {
+  outline: none;
+  border-color: #1f6f43;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.actions .btn {
+  flex: 1;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.result-count {
+  font-size: 1.05rem;
+  color: #374151;
+}
+
+.result-count strong {
+  color: #1f6f43;
+  font-size: 1.4rem;
+}
+
+.qr-box {
+  background: #fff;
+  padding: 16px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+}
+
+.hint {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.error {
+  margin-top: 16px;
+  color: #d64545;
+  font-weight: 600;
+}
