@@ -12,22 +12,42 @@ function publicUser(user) {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone || null,
     bottleCount: user.bottleCount,
     createdAt: user.createdAt,
   };
 }
 
+function validatePhone(phone) {
+  return /^\d{11}$/.test(String(phone || '').trim());
+}
+
+// POST /auth/register
 router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body || {};
+  const { name, email, password, phone } = req.body || {};
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: 'Name, email and password are required' });
   }
 
+  // Phone is optional but must be 11 digits if provided
+  const normalizedPhone = phone ? String(phone).trim() : null;
+  if (normalizedPhone && !validatePhone(normalizedPhone)) {
+    return res.status(400).json({ message: 'Phone number must be exactly 11 digits' });
+  }
+
   const normalizedEmail = String(email).trim().toLowerCase();
-  const existing = db.get('users').find({ email: normalizedEmail }).value();
-  if (existing) {
+
+  const emailExists = db.get('users').find({ email: normalizedEmail }).value();
+  if (emailExists) {
     return res.status(409).json({ message: 'An account with this email already exists' });
+  }
+
+  if (normalizedPhone) {
+    const phoneExists = db.get('users').find({ phone: normalizedPhone }).value();
+    if (phoneExists) {
+      return res.status(409).json({ message: 'An account with this phone number already exists' });
+    }
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -35,6 +55,7 @@ router.post('/register', async (req, res) => {
     id: uuidv4(),
     name: String(name).trim(),
     email: normalizedEmail,
+    phone: normalizedPhone,
     passwordHash,
     bottleCount: 0,
     createdAt: new Date().toISOString(),
@@ -46,15 +67,23 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ token, user: publicUser(user) });
 });
 
+// POST /auth/login  — accepts { emailOrPhone, password } or legacy { email, password }
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body || {};
+  const { emailOrPhone, email, password } = req.body || {};
+  const rawIdentifier = String(emailOrPhone || email || '').trim();
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+  if (!rawIdentifier || !password) {
+    return res.status(400).json({ message: 'Email/phone and password are required' });
   }
 
-  const normalizedEmail = String(email).trim().toLowerCase();
-  const user = db.get('users').find({ email: normalizedEmail }).value();
+  // Try email match first (lowercase)
+  let user = db.get('users').find({ email: rawIdentifier.toLowerCase() }).value();
+
+  // Then try phone match (exact 11-digit string)
+  if (!user && /^\d{10,11}$/.test(rawIdentifier)) {
+    user = db.get('users').find({ phone: rawIdentifier }).value();
+  }
+
   if (!user) {
     return res.status(401).json({ message: 'Invalid email or password' });
   }
@@ -68,6 +97,7 @@ router.post('/login', async (req, res) => {
   res.json({ token, user: publicUser(user) });
 });
 
+// GET /auth/me
 router.get('/me', requireAuth, (req, res) => {
   const user = db.get('users').find({ id: req.userId }).value();
   if (!user) return res.status(404).json({ message: 'User not found' });

@@ -9,6 +9,12 @@ if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 const adapter = new FileSync(path.join(dataDir, 'db.json'));
 const db = low(adapter);
 
-db.defaults({ users: [], sessions: [] }).write();
+db.defaults({
+  users: [],
+  sessions: [],
+  machines: [],
+  scans: [],
+  notifications: [],
+}).write();
 
 module.exports = db;

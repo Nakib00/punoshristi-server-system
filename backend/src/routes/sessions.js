@@ -5,21 +5,34 @@ const db = require('../db');
 
 const router = express.Router();
 
-// Operator (web) creates a counting session: "Stop" generates a one-time QR
-// that encodes a random token. The QR image itself only carries the token —
-// the bottle count is looked up server-side when the token is redeemed.
+// Operator creates a counting session linked to a machine.
+// POST /api/sessions  { bottleCount, machineId }
 router.post('/', async (req, res) => {
-  const { bottleCount } = req.body || {};
+  const { bottleCount, machineId } = req.body || {};
   const count = Number(bottleCount);
 
   if (!Number.isFinite(count) || count <= 0 || !Number.isInteger(count)) {
     return res.status(400).json({ message: 'bottleCount must be a positive whole number' });
   }
 
+  let machineName = null;
+  let machineLocation = null;
+  if (machineId) {
+    const machine = db.get('machines').find({ id: machineId }).value();
+    if (!machine) {
+      return res.status(404).json({ message: 'Machine not found' });
+    }
+    machineName = machine.name;
+    machineLocation = machine.location;
+  }
+
   const session = {
     id: uuidv4(),
     token: uuidv4(),
     bottleCount: count,
+    machineId: machineId || null,
+    machineName,
+    machineLocation,
     used: false,
     redeemedBy: null,
     redeemedAt: null,
@@ -36,6 +49,9 @@ router.post('/', async (req, res) => {
       id: session.id,
       bottleCount: session.bottleCount,
       token: session.token,
+      machineId: session.machineId,
+      machineName: session.machineName,
+      machineLocation: session.machineLocation,
       used: session.used,
       createdAt: session.createdAt,
     },

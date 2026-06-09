@@ -28,14 +28,19 @@ export function describeAuthError(err, fallback) {
   return KNOWN_MESSAGES[serverMessage] || serverMessage || fallback;
 }
 
-export async function registerRequest(name, email, password) {
-  const { data } = await api.post('/auth/register', { name, email, password });
+export async function registerRequest(name, email, password, phone) {
+  const { data } = await api.post('/auth/register', { name, email, password, phone: phone || undefined });
   return data;
 }
 
-export async function loginRequest(email, password) {
-  const { data } = await api.post('/auth/login', { email, password });
+export async function loginRequest(emailOrPhone, password) {
+  const { data } = await api.post('/auth/login', { emailOrPhone, password });
   return data;
+}
+
+export async function fetchScanHistory() {
+  const { data } = await api.get('/my/scans');
+  return data; // { scans: [...] }
 }
 
 export async function fetchMe() {

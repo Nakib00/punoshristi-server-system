@@ -4,7 +4,12 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
 
 export const api = axios.create({ baseURL });
 
-export async function createSession(bottleCount) {
-  const { data } = await api.post('/sessions', { bottleCount });
+export async function getMachines() {
+  const { data } = await api.get('/machines');
+  return data; // { machines: [...] }
+}
+
+export async function createSession(bottleCount, machineId) {
+  const { data } = await api.post('/sessions', { bottleCount, machineId: machineId || undefined });
   return data;
 }

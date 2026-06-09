@@ -132,3 +132,69 @@
   color: #d64545;
   font-weight: 600;
 }
+
+/* Machine selector */
+.machine-selector {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.machine-selector label {
+  display: block;
+  font-weight: 600;
+  color: #1f6f43;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.machine-selector select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  font-size: 1rem;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
+}
+
+.machine-selector select:focus {
+  outline: none;
+  border-color: #1f6f43;
+}
+
+.machine-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.machine-badge {
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.loading-text,
+.no-machine-text {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.result-machine {
+  font-size: 0.9rem;
+  color: #1f6f43;
+  background: #f0fdf4;
+  border-radius: 8px;
+  padding: 6px 14px;
+  margin: 0;
+}

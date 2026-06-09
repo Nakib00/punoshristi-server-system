@@ -73,8 +73,8 @@ export function AuthProvider({ children }) {
     persist(authToken, authUser);
   };
 
-  const register = async (name, email, password) => {
-    const { token: authToken, user: authUser } = await registerRequest(name, email, password);
+  const register = async (name, email, password, phone) => {
+    const { token: authToken, user: authUser } = await registerRequest(name, email, password, phone);
     persist(authToken, authUser);
   };
 

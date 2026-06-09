@@ -273,3 +273,79 @@
     justify-content: center;
   }
 }
+
+/* Optional tag in labels */
+.optional-tag {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* User phone in dashboard */
+.user-phone {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 2px 0 0;
+}
+
+/* Scan history section */
+.history-section {
+  margin-top: 28px;
+  width: 100%;
+}
+
+.history-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f6f43;
+  margin: 0 0 12px;
+  text-align: left;
+}
+
+.history-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  padding: 20px 0;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.history-item-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-bottles {
+  font-weight: 700;
+  color: #1f6f43;
+  font-size: 1.05rem;
+}
+
+.history-date {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.history-machine {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
