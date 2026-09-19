@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { MACHINE_ID, createSession, fetchAds, getMachines } from './api';
 import { useGpioBridge } from './useGpioBridge';
 import AdCarousel from './AdCarousel';
+import SetupModal from './SetupModal';
 import './App.css';
 
 const STATE = {
@@ -14,6 +15,7 @@ const STATE = {
 
 const QR_DISPLAY_SECONDS = 30;
 const COUNTING_IDLE_TIMEOUT_MS = 2 * 60 * 1000; // auto-cancel if nobody presses Stop
+const ADS_REFRESH_MS = 3 * 60 * 1000; // re-check schedule/targeting periodically
 
 function App() {
   const [state, setState] = useState(STATE.IDLE);
@@ -24,24 +26,38 @@ function App() {
   const [machines, setMachines] = useState([]);
   const [selectedMachineId, setSelectedMachineId] = useState(MACHINE_ID || '');
   const [qrSecondsLeft, setQrSecondsLeft] = useState(QR_DISPLAY_SECONDS);
+  const [showSetup, setShowSetup] = useState(false);
   const stateRef = useRef(state);
   stateRef.current = state;
   const countingTimeoutRef = useRef(null);
   const bottleCountRef = useRef(0);
 
   useEffect(() => {
-    fetchAds()
-      .then(({ ads: list }) => setAds(list || []))
+    // Always fetch the machine list — even when MACHINE_ID is fixed — so
+    // the status badge and the setup screen's "edit existing machine" mode
+    // have real data to show, not just an id.
+    getMachines()
+      .then(({ machines: list }) => {
+        setMachines(list || []);
+        if (!MACHINE_ID && list && list.length > 0) setSelectedMachineId(list[0].id);
+      })
       .catch(() => {});
-    if (!MACHINE_ID) {
-      getMachines()
-        .then(({ machines: list }) => {
-          setMachines(list || []);
-          if (list && list.length > 0) setSelectedMachineId(list[0].id);
-        })
+  }, []);
+
+  // Ads are targeted per-machine and scheduled by date/day/time (see admin
+  // panel), so: refetch whenever the machine changes, and periodically
+  // while idle so a schedule boundary (e.g. an ad's end time) takes effect
+  // without needing a manual reload.
+  useEffect(() => {
+    function loadAds() {
+      fetchAds(selectedMachineId)
+        .then(({ ads: list }) => setAds(list || []))
         .catch(() => {});
     }
-  }, []);
+    loadAds();
+    const interval = setInterval(loadAds, ADS_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [selectedMachineId]);
 
   const resetToIdle = useCallback(() => {
     clearTimeout(countingTimeoutRef.current);
@@ -134,8 +150,27 @@ function App() {
             ))}
           </select>
         )}
-        {selectedMachine && <span className="machine-name-badge">📍 {selectedMachine.name}</span>}
+        <div className="status-bar-right">
+          {selectedMachine && (
+            <span className="machine-name-badge">
+              📍 {selectedMachine.name} — {selectedMachine.location}
+            </span>
+          )}
+          {state === STATE.IDLE && (
+            <button className="setup-gear-btn" onClick={() => setShowSetup(true)} title="মেশিন সেটআপ">
+              ⚙
+            </button>
+          )}
+        </div>
       </div>
+
+      {showSetup && (
+        <SetupModal
+          machine={selectedMachine}
+          onClose={() => setShowSetup(false)}
+          onSaved={() => window.location.reload()}
+        />
+      )}
 
       {state === STATE.IDLE && (
         <div className="kiosk-idle">

@@ -114,11 +114,17 @@ export async function fetchAdminAds() {
   return data;
 }
 
-export async function uploadAd(file, { title, durationSeconds }) {
+export async function uploadAd(file, { title, durationSeconds, machineIds, startDate, endDate, daysOfWeek, startTime, endTime }) {
   const form = new FormData();
   form.append('file', file);
   if (title) form.append('title', title);
   if (durationSeconds) form.append('durationSeconds', durationSeconds);
+  form.append('machineIds', JSON.stringify(machineIds || []));
+  form.append('daysOfWeek', JSON.stringify(daysOfWeek || []));
+  if (startDate) form.append('startDate', startDate);
+  if (endDate) form.append('endDate', endDate);
+  if (startTime) form.append('startTime', startTime);
+  if (endTime) form.append('endTime', endTime);
   const { data } = await api.post('/ads', form, { headers: { 'Content-Type': 'multipart/form-data' } });
   return data;
 }
