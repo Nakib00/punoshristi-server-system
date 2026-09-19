@@ -14,22 +14,23 @@ export function setAuthToken(token) {
 }
 
 const KNOWN_MESSAGES = {
-  'An account with this email already exists': 'এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট তৈরি করা হয়েছে। লগইন করুন অথবা ভিন্ন ইমেইল ব্যবহার করুন।',
-  'Invalid email or password': 'ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।',
-  'Name, email and password are required': 'নাম, ইমেইল এবং পাসওয়ার্ড — সবগুলো তথ্য দিন।',
-  'Email and password are required': 'ইমেইল এবং পাসওয়ার্ড দিন।',
+  'An account with this email already exists': 'An account with this email already exists. Try logging in instead.',
+  'An account with this phone number already exists': 'An account with this phone number already exists.',
+  'Invalid email or password': 'That email/phone or password is incorrect.',
+  'Name, email, phone and password are required': 'Please fill in your name, email, phone and password.',
+  'Email/phone and password are required': 'Please enter your email/phone and password.',
 };
 
 export function describeAuthError(err, fallback) {
   if (!err?.response) {
-    return 'সার্ভারের সাথে সংযোগ করা যাচ্ছে না। ফোন ও কম্পিউটার একই Wi-Fi-তে আছে কিনা এবং সার্ভার চালু আছে কিনা পরীক্ষা করুন।';
+    return "Can't reach the server. Check that your phone and computer are on the same Wi-Fi and the server is running.";
   }
   const serverMessage = err.response.data?.message;
   return KNOWN_MESSAGES[serverMessage] || serverMessage || fallback;
 }
 
 export async function registerRequest(name, email, password, phone) {
-  const { data } = await api.post('/auth/register', { name, email, password, phone: phone || undefined });
+  const { data } = await api.post('/auth/register', { name, email, password, phone });
   return data;
 }
 
@@ -38,17 +39,72 @@ export async function loginRequest(emailOrPhone, password) {
   return data;
 }
 
-export async function fetchScanHistory() {
-  const { data } = await api.get('/my/scans');
-  return data; // { scans: [...] }
-}
-
 export async function fetchMe() {
   const { data } = await api.get('/auth/me');
   return data;
 }
 
+export async function sendOtp() {
+  const { data } = await api.post('/auth/otp/send');
+  return data;
+}
+
+export async function verifyOtp(code) {
+  const { data } = await api.post('/auth/otp/verify', { code });
+  return data;
+}
+
 export async function redeemQrToken(token) {
   const { data } = await api.post('/scan', { token });
+  return data;
+}
+
+export async function fetchScanHistory() {
+  const { data } = await api.get('/my/scans');
+  return data;
+}
+
+export async function fetchMyStats() {
+  const { data } = await api.get('/my/stats');
+  return data;
+}
+
+export async function fetchMyActivity(limit = 20) {
+  const { data } = await api.get('/my/activity', { params: { limit } });
+  return data;
+}
+
+export async function toggleFavoriteMachine(machineId) {
+  const { data } = await api.post(`/my/favorites/${machineId}`);
+  return data;
+}
+
+export async function fetchMachines() {
+  const { data } = await api.get('/machines');
+  return data;
+}
+
+export async function fetchPartners() {
+  const { data } = await api.get('/partners');
+  return data;
+}
+
+export async function fetchPartner(id) {
+  const { data } = await api.get(`/partners/${id}`);
+  return data;
+}
+
+export async function redeemOffer(partnerId, offerId) {
+  const { data } = await api.post(`/partners/${partnerId}/redeem`, { offerId });
+  return data;
+}
+
+export async function fetchLeaderboard(range = 'week') {
+  const { data } = await api.get('/leaderboard', { params: { range } });
+  return data;
+}
+
+export async function fetchMyRank(range = 'week') {
+  const { data } = await api.get('/leaderboard/me', { params: { range } });
   return data;
 }

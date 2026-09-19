@@ -2,13 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { io } from 'socket.io-client';
 import { SOCKET_URL, fetchMe, loginRequest, registerRequest, setAuthToken } from './api';
 
-const STORAGE_KEY = 'bottle-deposit/auth';
+const STORAGE_KEY = 'punoshristi/auth';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastScanResult, setLastScanResult] = useState(null);
   const socketRef = useRef(null);
 
   const connectSocket = useCallback((authToken, userId) => {
@@ -18,7 +19,11 @@ export function AuthProvider({ children }) {
     }
     const socket = io(SOCKET_URL, { auth: { token: authToken } });
     socket.on('bottle-count-updated', (payload) => {
-      setUser((prev) => (prev && prev.id === userId ? { ...prev, bottleCount: payload.bottleCount } : prev));
+      setUser((prev) => (prev && prev.id === userId ? { ...prev, bottleCount: payload.bottleCount, points: payload.points } : prev));
+      setLastScanResult(payload);
+    });
+    socket.on('points-updated', (payload) => {
+      setUser((prev) => (prev && prev.id === userId ? { ...prev, points: payload.points } : prev));
     });
     socketRef.current = socket;
   }, []);
@@ -68,14 +73,16 @@ export function AuthProvider({ children }) {
     connectSocket(authToken, authUser.id);
   };
 
-  const login = async (email, password) => {
-    const { token: authToken, user: authUser } = await loginRequest(email, password);
+  const login = async (emailOrPhone, password) => {
+    const { token: authToken, user: authUser } = await loginRequest(emailOrPhone, password);
     persist(authToken, authUser);
+    return authUser;
   };
 
   const register = async (name, email, password, phone) => {
     const { token: authToken, user: authUser } = await registerRequest(name, email, password, phone);
     persist(authToken, authUser);
+    return authUser;
   };
 
   const logout = () => {
@@ -89,17 +96,29 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const applyBottleUpdate = (bottleCount) => {
+  const refreshUser = useCallback(async () => {
+    const { user: freshUser } = await fetchMe();
+    setUser(freshUser);
+    setToken((currentToken) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: currentToken, user: freshUser }));
+      return currentToken;
+    });
+    return freshUser;
+  }, []);
+
+  const updateUser = (patch) => {
     setUser((prev) => {
       if (!prev) return prev;
-      const next = { ...prev, bottleCount };
+      const next = { ...prev, ...patch };
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user: next }));
       return next;
     });
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, applyBottleUpdate }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, register, logout, refreshUser, updateUser, lastScanResult, clearLastScanResult: () => setLastScanResult(null) }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -4,6 +4,8 @@ const NAV_ITEMS = [
   { to: '/', label: '📊 ওভারভিউ', end: true },
   { to: '/users', label: '👤 ইউজারগণ' },
   { to: '/machines', label: '🏭 মেশিন ও লোকেশন' },
+  { to: '/partners', label: '🎁 পার্টনার ও অফার' },
+  { to: '/ads', label: '📺 কিয়স্ক বিজ্ঞাপন' },
   { to: '/scans', label: '🧾 জমার ইতিহাস' },
 ];
 

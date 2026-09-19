@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { describeAuthError } from '../api';
+import logo from '../assets/logo.png';
+import Icon from '../components/Icon';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -10,89 +12,170 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!name.trim() || !email.trim() || !password) {
-      setError('নাম, ইমেইল এবং পাসওয়ার্ড আবশ্যক');
+    if (!name.trim() || !email.trim() || !password || !phone.trim()) {
+      setError('Please fill in your name, phone, email and password.');
       return;
     }
-    if (phone && !/^\d{11}$/.test(phone.trim())) {
-      setError('ফোন নম্বর অবশ্যই ঠিক ১১ সংখ্যার হতে হবে (যেমন: 01712345678)');
+    if (!/^\d{11}$/.test(phone.trim())) {
+      setError('Phone number must be exactly 11 digits (e.g. 01712345678).');
       return;
     }
     if (password.length < 6) {
-      setError('পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে');
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (!agreed) {
+      setError('Please agree to the Terms of Service and Privacy Policy.');
       return;
     }
     setSubmitting(true);
     try {
-      await register(name.trim(), email.trim(), password, phone.trim() || undefined);
-      navigate('/dashboard', { replace: true });
+      await register(name.trim(), email.trim(), password, phone.trim());
+      navigate('/verify-otp', { replace: true });
     } catch (err) {
-      setError(describeAuthError(err, 'রেজিস্ট্রেশন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।'));
+      setError(describeAuthError(err, 'Registration failed. Please try again.'));
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   return (
-    <div className="auth-card">
-      <h1>রেজিস্ট্রেশন করুন</h1>
-      <form onSubmit={handleSubmit} className="auth-form">
-        <label>
-          নাম
+    <main className="flex-grow flex flex-col items-center justify-start px-margin-mobile py-xl max-w-lg mx-auto w-full min-h-screen">
+      <div className="mb-lg flex flex-col items-center">
+        <img alt="Punoshristi Logo" className="h-16 w-16 object-contain rounded-full mb-md" src={logo} />
+        <h1 className="font-headline-xl text-headline-xl text-primary text-center">Create Your Account</h1>
+        <p className="font-body-lg text-body-lg text-on-surface-variant text-center mt-xs">
+          Join thousands recycling for rewards
+        </p>
+      </div>
+
+      <form className="w-full space-y-md" onSubmit={handleSubmit}>
+        <div className="space-y-xs">
+          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Full Name</label>
+          <div className="relative">
+            <Icon name="person" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
+            <input
+              className="w-full bg-surface-container-low border-[1.5px] border-outline-variant focus:border-secondary rounded-xl py-3 pl-12 pr-md outline-none transition-all placeholder:text-on-surface-variant/50"
+              placeholder="John Doe"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-xs">
+          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Phone Number</label>
+          <div className="flex gap-xs">
+            <div className="flex items-center bg-surface-container-low border-[1.5px] border-outline-variant rounded-xl py-3 px-md space-x-xs shrink-0 w-20 justify-center">
+              <span className="font-body-md text-on-surface">+88</span>
+            </div>
+            <div className="relative flex-grow">
+              <Icon name="phone" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
+              <input
+                className="w-full bg-surface-container-low border-[1.5px] border-outline-variant focus:border-secondary rounded-xl py-3 pl-12 pr-md outline-none transition-all placeholder:text-on-surface-variant/50"
+                placeholder="01XXX-XXXXXX"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                autoComplete="tel"
+                inputMode="numeric"
+                maxLength={11}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-xs">
+          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Email</label>
+          <div className="relative">
+            <Icon name="mail" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
+            <input
+              className="w-full bg-surface-container-low border-[1.5px] border-outline-variant focus:border-secondary rounded-xl py-3 pl-12 pr-md outline-none transition-all placeholder:text-on-surface-variant/50"
+              placeholder="email@example.com"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+          <div className="space-y-xs">
+            <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Password</label>
+            <div className="relative">
+              <Icon name="lock" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
+              <input
+                className="w-full bg-surface-container-low border-[1.5px] border-outline-variant focus:border-secondary rounded-xl py-3 pl-12 pr-md outline-none transition-all placeholder:text-on-surface-variant/50"
+                placeholder="••••••••"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+          </div>
+          <div className="space-y-xs">
+            <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Confirm Password</label>
+            <div className="relative">
+              <Icon name="verified_user" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
+              <input
+                className="w-full bg-surface-container-low border-[1.5px] border-outline-variant focus:border-secondary rounded-xl py-3 pl-12 pr-md outline-none transition-all placeholder:text-on-surface-variant/50"
+                placeholder="••••••••"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-md py-xs">
           <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="আপনার পুরো নাম"
-            autoComplete="name"
+            className="mt-1 w-5 h-5 rounded border-outline-variant text-primary focus:ring-secondary cursor-pointer"
+            id="terms"
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
           />
-        </label>
-        <label>
-          ইমেইল
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
-        </label>
-        <label>
-          ফোন নম্বর <span className="optional-tag">(ঐচ্ছিক)</span>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
-            placeholder="01712345678"
-            autoComplete="tel"
-            inputMode="numeric"
-            maxLength={11}
-          />
-        </label>
-        <label>
-          পাসওয়ার্ড
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="অন্তত ৬ অক্ষর"
-            autoComplete="new-password"
-          />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'অপেক্ষা করুন...' : 'অ্যাকাউন্ট তৈরি করুন'}
+          <label className="font-body-md text-body-md text-on-surface-variant leading-tight" htmlFor="terms">
+            I agree to the <span className="text-primary font-label-md">Terms of Service</span> and{' '}
+            <span className="text-primary font-label-md">Privacy Policy</span>.
+          </label>
+        </div>
+
+        {error && <p className="text-error font-body-md text-body-md">{error}</p>}
+
+        <button
+          className="w-full bg-primary text-on-primary font-title-md py-4 rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 mt-md disabled:opacity-60"
+          type="submit"
+          disabled={submitting}
+        >
+          {submitting ? 'Creating account...' : 'Create Account'}
         </button>
       </form>
-      <p className="auth-switch">
-        অ্যাকাউন্ট আছে? <Link to="/login">লগইন করুন</Link>
+
+      <p className="mt-xl font-body-lg text-body-lg text-on-surface-variant">
+        Already have an account?{' '}
+        <Link className="text-primary font-bold hover:underline ml-xs" to="/login">
+          Login Here
+        </Link>
       </p>
-    </div>
+    </main>
   );
 }

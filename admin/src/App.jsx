@@ -5,6 +5,8 @@ import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import MachinesPage from './pages/MachinesPage';
 import ScansPage from './pages/ScansPage';
+import PartnersPage from './pages/PartnersPage';
+import AdsPage from './pages/AdsPage';
 import './App.css';
 
 export default function App() {
@@ -17,6 +19,8 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route path="users" element={<UsersPage />} />
         <Route path="machines" element={<MachinesPage />} />
+        <Route path="partners" element={<PartnersPage />} />
+        <Route path="ads" element={<AdsPage />} />
         <Route path="scans" element={<ScansPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

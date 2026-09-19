@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { redeemQrToken } from '../api';
 import { useAuth } from '../AuthContext';
+import Icon from '../components/Icon';
 
 const READER_ELEMENT_ID = 'qr-reader';
 
 export default function ScanPage() {
   const navigate = useNavigate();
-  const { applyBottleUpdate } = useAuth();
-  const [status, setStatus] = useState('scanning'); // scanning | processing | success | error
+  const { updateUser } = useAuth();
+  const [status, setStatus] = useState('scanning'); // scanning | processing | error
   const [message, setMessage] = useState('');
+  const [manualCode, setManualCode] = useState('');
   const scannerRef = useRef(null);
   const handledRef = useRef(false);
 
@@ -20,7 +22,7 @@ export default function ScanPage() {
       scanner = new Html5Qrcode(READER_ELEMENT_ID);
     } catch (err) {
       setStatus('error');
-      setMessage(`ক্যামেরা মডিউল চালু করা যায়নি: ${err?.message || err}`);
+      setMessage(`Could not start the camera module: ${err?.message || err}`);
       return undefined;
     }
     scannerRef.current = scanner;
@@ -35,13 +37,11 @@ export default function ScanPage() {
           handledRef.current = true;
           handleScanned(decodedText);
         },
-        () => {
-          /* ignore per-frame scan errors */
-        }
+        () => {}
       )
       .catch(() => {
         setStatus('error');
-        setMessage('ক্যামেরা চালু করা যায়নি। অনুগ্রহ করে ক্যামেরা ব্যবহারের অনুমতি দিন এবং আবার চেষ্টা করুন।');
+        setMessage('Could not access the camera. Please allow camera permission and try again, or enter the code manually below.');
       });
 
     return () => {
@@ -67,31 +67,6 @@ export default function ScanPage() {
     }
   }
 
-  async function handleScanned(decodedText) {
-    setStatus('processing');
-    await stopScannerAsync();
-
-    let token = decodedText;
-    try {
-      const parsed = JSON.parse(decodedText);
-      if (parsed && typeof parsed.token === 'string') {
-        token = parsed.token;
-      }
-    } catch {
-      // not JSON, treat decodedText as the raw token
-    }
-
-    try {
-      const data = await redeemQrToken(token);
-      applyBottleUpdate(data.bottleCount);
-      setStatus('success');
-      setMessage(`${data.addedBottles} টি বোতল যোগ হয়েছে! আপনার মোট সংখ্যা এখন ${data.bottleCount}।`);
-    } catch (err) {
-      setStatus('error');
-      setMessage(err?.response?.data?.message || 'QR কোড যাচাই করা যায়নি। আবার চেষ্টা করুন।');
-    }
-  }
-
   async function stopScannerAsync() {
     const scanner = scannerRef.current;
     if (scanner && scanner.isScanning) {
@@ -102,6 +77,39 @@ export default function ScanPage() {
         /* ignore */
       }
     }
+  }
+
+  async function redeem(token) {
+    try {
+      const data = await redeemQrToken(token);
+      updateUser({ bottleCount: data.bottleCount, points: data.points });
+      navigate('/success', { state: data, replace: true });
+    } catch (err) {
+      setStatus('error');
+      setMessage(err?.response?.data?.message || 'Could not verify this code. Please try again.');
+    }
+  }
+
+  async function handleScanned(decodedText) {
+    setStatus('processing');
+    await stopScannerAsync();
+
+    let token = decodedText;
+    try {
+      const parsed = JSON.parse(decodedText);
+      if (parsed && typeof parsed.token === 'string') token = parsed.token;
+    } catch {
+      /* raw token */
+    }
+    redeem(token);
+  }
+
+  async function handleManualSubmit(e) {
+    e.preventDefault();
+    if (!manualCode.trim()) return;
+    setStatus('processing');
+    await stopScannerAsync();
+    redeem(manualCode.trim());
   }
 
   function handleRetry() {
@@ -124,47 +132,80 @@ export default function ScanPage() {
         )
         .catch(() => {
           setStatus('error');
-          setMessage('ক্যামেরা চালু করা যায়নি। আবার চেষ্টা করুন।');
+          setMessage('Could not access the camera. Try the manual code entry below.');
         });
     }, 100);
   }
 
   return (
-    <div className="scan-page">
-      <h1>QR কোড স্ক্যান করুন</h1>
-
-      <div className="scanner-frame">
-        <div id={READER_ELEMENT_ID} className="qr-reader" />
-        {status === 'processing' && (
-          <div className="scanner-overlay">
-            <p>যাচাই করা হচ্ছে...</p>
-          </div>
-        )}
-      </div>
-
-      {status === 'success' && (
-        <div className="result-card result-success">
-          <p>✅ {message}</p>
-          <div className="result-actions">
-            <button className="btn-primary" onClick={() => navigate('/dashboard')}>ড্যাশবোর্ডে ফিরে যান</button>
-            <button className="btn-ghost" onClick={handleRetry}>আরেকটি QR স্ক্যান করুন</button>
-          </div>
+    <div className="bg-[#0F1F0F] min-h-screen flex flex-col font-body-md text-on-surface overflow-hidden">
+      <header className="flex justify-between items-center px-margin-mobile h-16 w-full z-50 text-white">
+        <div className="flex items-center gap-md">
+          <button
+            className="hover:bg-white/10 p-2 rounded-full transition-colors active:scale-95 duration-200"
+            onClick={() => navigate('/dashboard')}
+          >
+            <Icon name="arrow_back" />
+          </button>
+          <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold">Scan Machine QR</h1>
         </div>
-      )}
+        <div className="w-10" />
+      </header>
 
-      {status === 'error' && (
-        <div className="result-card result-error">
-          <p>❌ {message}</p>
-          <div className="result-actions">
-            <button className="btn-primary" onClick={handleRetry}>আবার চেষ্টা করুন</button>
-            <button className="btn-ghost" onClick={() => navigate('/dashboard')}>ড্যাশবোর্ডে ফিরে যান</button>
-          </div>
+      <main className="flex-1 flex flex-col items-center justify-center px-margin-mobile relative">
+        <div className="relative w-full aspect-square max-w-[320px] mb-lg overflow-hidden rounded-xl bg-black">
+          <div id={READER_ELEMENT_ID} className="w-full h-full [&_video]:!object-cover [&_video]:!w-full [&_video]:!h-full" />
+          <div className="absolute inset-0 border-[2px] border-white/20 rounded-xl pointer-events-none" />
+          <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-secondary-container rounded-tl-xl shadow-[0_0_15px_rgba(145,247,142,0.6)] pointer-events-none" />
+          <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-secondary-container rounded-tr-xl shadow-[0_0_15px_rgba(145,247,142,0.6)] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-secondary-container rounded-bl-xl shadow-[0_0_15px_rgba(145,247,142,0.6)] pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-secondary-container rounded-br-xl shadow-[0_0_15px_rgba(145,247,142,0.6)] pointer-events-none" />
+          {status === 'scanning' && (
+            <div className="scanner-line absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-secondary-container to-transparent shadow-[0_0_8px_rgba(145,247,142,0.8)] z-10 pointer-events-none" />
+          )}
+          {status === 'processing' && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <p className="text-white font-title-md text-title-md">Verifying...</p>
+            </div>
+          )}
         </div>
-      )}
 
-      {status === 'scanning' && (
-        <p className="hint">QR কোডটি ক্যামেরার সামনে ধরুন — স্বয়ংক্রিয়ভাবে স্ক্যান হয়ে যাবে।</p>
-      )}
+        <p className="text-white/80 text-center font-body-lg text-body-lg mb-lg">
+          {status === 'error' ? message : 'Point your camera at the machine QR code'}
+        </p>
+
+        <div className="w-full max-w-md bg-surface-container-lowest/10 backdrop-blur-md p-lg rounded-xl border border-white/10 mt-auto mb-xl">
+          <form onSubmit={handleManualSubmit} className="flex flex-col gap-md">
+            <label className="text-white/60 font-label-md text-label-md">Or Enter Code Manually</label>
+            <div className="flex flex-col gap-sm">
+              <input
+                className="w-full bg-white/5 border border-white/20 rounded-lg py-3 px-4 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-secondary-container/50 focus:border-secondary-container transition-all"
+                placeholder="e.g. RVM-7729"
+                type="text"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+              />
+              <button
+                type="submit"
+                disabled={status === 'processing'}
+                className="w-full bg-secondary-container text-on-secondary-container py-4 rounded-full font-title-md text-title-md font-bold flex items-center justify-center gap-base active:scale-95 transition-transform duration-150 disabled:opacity-60"
+              >
+                Confirm Code
+                <Icon name="check_circle" />
+              </button>
+              {status === 'error' && (
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="w-full bg-white/10 text-white py-3 rounded-full font-label-md text-label-md active:scale-95 transition-transform"
+                >
+                  Retry Camera Scan
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </main>
     </div>
   );
 }

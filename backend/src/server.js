@@ -13,6 +13,10 @@ const sessionRoutes = require('./routes/sessions');
 const machineRoutes = require('./routes/machines');
 const adminRoutes = require('./routes/admin');
 const createScanRouter = require('./routes/scan');
+const createPartnersRouter = require('./routes/partners');
+const leaderboardRoutes = require('./routes/leaderboard');
+const meRoutes = require('./routes/me');
+const adsRoutes = require('./routes/ads');
 
 const app = express();
 const server = http.createServer(app);
@@ -53,6 +57,7 @@ io.on('connection', (socket) => {
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(require('path').join(__dirname, '..', 'uploads')));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
@@ -60,19 +65,10 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/machines', machineRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/scan', createScanRouter(io));
-
-// User's own scan history
-const { requireAuth } = require('./middleware/auth');
-const db = require('./db');
-app.get('/api/my/scans', requireAuth, (req, res) => {
-  const scans = db
-    .get('scans')
-    .filter({ userId: req.userId })
-    .value()
-    .slice()
-    .reverse();
-  res.json({ scans });
-});
+app.use('/api/partners', createPartnersRouter(io));
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/my', meRoutes);
+app.use('/api/ads', adsRoutes);
 
 app.use((req, res) => res.status(404).json({ message: 'Not found' }));
 // eslint-disable-next-line no-unused-vars

@@ -7,7 +7,7 @@ import {
   updateMachine,
 } from '../api';
 
-const EMPTY_FORM = { name: '', location: '', address: '', capacity: 500 };
+const EMPTY_FORM = { name: '', location: '', address: '', capacity: 500, lat: '', lng: '' };
 
 export default function MachinesPage() {
   const [machines, setMachines] = useState([]);
@@ -42,6 +42,8 @@ export default function MachinesPage() {
         location: form.location.trim(),
         address: form.address.trim(),
         capacity: Number(form.capacity) || 500,
+        lat: form.lat === '' ? undefined : Number(form.lat),
+        lng: form.lng === '' ? undefined : Number(form.lng),
       });
       setForm(EMPTY_FORM);
       setShowForm(false);
@@ -123,6 +125,28 @@ export default function MachinesPage() {
               />
             </label>
           </div>
+          <div className="form-row">
+            <label>
+              Latitude (ঐচ্ছিক — মানচিত্রে সঠিক অবস্থান দেখাতে)
+              <input
+                type="number"
+                step="any"
+                value={form.lat}
+                onChange={(e) => setForm((f) => ({ ...f, lat: e.target.value }))}
+                placeholder="যেমন: 23.8103"
+              />
+            </label>
+            <label>
+              Longitude (ঐচ্ছিক)
+              <input
+                type="number"
+                step="any"
+                value={form.lng}
+                onChange={(e) => setForm((f) => ({ ...f, lng: e.target.value }))}
+                placeholder="যেমন: 90.4125"
+              />
+            </label>
+          </div>
           {error && <p className="form-error">{error}</p>}
           <button type="submit" className="btn-primary" disabled={submitting}>
             {submitting ? 'সংরক্ষণ হচ্ছে...' : 'মেশিন সংরক্ষণ করুন'}
@@ -158,6 +182,9 @@ export default function MachinesPage() {
               </div>
 
               <p className="machine-meta">মোট স্ক্যান: {m.totalScans} | অবস্থা: {m.active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</p>
+              <p className="machine-meta">
+                {m.hasPreciseLocation ? '📍 সঠিক GPS লোকেশন সেট করা আছে' : '📍 আনুমানিক অবস্থান (Lat/Lng সেট করুন)'}
+              </p>
 
               <div className="machine-actions">
                 <button className="btn-small" onClick={() => handleEmpty(m)}>🗑️ খালি করুন</button>

@@ -1,17 +1,23 @@
-# বোতল ডিপোজিট সিস্টেম (Bottle Deposit System)
+# বোতল ডিপোজিট সিস্টেম (Bottle Deposit / RVM System)
 
-একটি লোকাল-নেটওয়ার্ক প্রজেক্ট যা প্লাস্টিক বোতল রিসাইক্লিং/ডিপোজিট কাউন্টারকে ডিজিটাইজ করে: অপারেটর মেশিনের সামনে দাঁড়িয়ে কতগুলো বোতল জমা পড়েছে তা গণনা করে একটি **এক-বার-ব্যবহারযোগ্য (single-use) QR কোড** তৈরি করেন, এবং ব্যবহারকারী তার ফোনের ব্রাউজার দিয়ে সেই QR কোড স্ক্যান করলে তার অ্যাকাউন্টের মোট বোতল সংখ্যা **রিয়েল-টাইমে** বেড়ে যায়।
+একটি লোকাল-নেটওয়ার্ক প্রজেক্ট যা প্লাস্টিক বোতল রিসাইক্লিং/ডিপোজিট মেশিন (Reverse Vending Machine — RVM)-কে ডিজিটাইজ করে: মেশিনে বোতল জমা দিলে একটি **এক-বার-ব্যবহারযোগ্য (single-use) QR কোড** তৈরি হয়, এবং ব্যবহারকারী তার ফোনের ব্রাউজার দিয়ে সেই QR কোড স্ক্যান করলে তার অ্যাকাউন্টে **Eco-Points** ও বোতল সংখ্যা **রিয়েল-টাইমে** যোগ হয়ে যায় — যা পরে পার্টনার দোকান/ক্যাফেতে রিডিম করা যায়।
 
-এই রিপোজিটরিতে চারটি সাব-প্রজেক্ট আছে:
+সিস্টেমটি দুইভাবে চালানো যায়:
+- **ম্যানুয়াল মোড** — একজন অপারেটর ল্যাপটপ/ট্যাবে বোতলের সংখ্যা টাইপ করে QR তৈরি করেন (টেস্টিং/ডেমোর জন্য সুবিধাজনক)।
+- **হার্ডওয়্যার মোড (RVM প্রোটোটাইপ)** — একটি Raspberry Pi + IR সেন্সর + Start/Stop বাটন দিয়ে বোতল স্বয়ংক্রিয়ভাবে গণনা হয়, মনিটরে অলস সময়ে বিজ্ঞাপন/ভিডিও চলতে থাকে, এবং Stop চাপলেই QR কোড দেখায়। বিস্তারিত: [হার্ডওয়্যার প্রোটোটাইপ (RVM মেশিন)](#হার্ডওয়্যার-প্রোটোটাইপ-rvm-মেশিন)।
+
+এই রিপোজিটরিতে পাঁচটি সাব-প্রজেক্ট আছে:
 
 | ফোল্ডার | বিবরণ | পোর্ট | স্ট্যাক |
 | --- | --- | --- | --- |
-| [`backend/`](backend/) | কেন্দ্রীয় API সার্ভার — ইউজার, সেশন/QR টোকেন, JWT অথেনটিকেশন এবং Socket.IO-ভিত্তিক রিয়েল-টাইম ইভেন্ট হ্যান্ডেল করে। JSON ফাইল ডাটাবেজ (`lowdb`) ব্যবহার করে। | `4000` | Node.js, Express, lowdb, Socket.IO |
-| [`web/`](web/) | **অপারেটর কাউন্টার UI** — মেশিন/কাউন্টারের পাশে রাখা কম্পিউটার বা ট্যাবে চলে। Start/Stop বাটন দিয়ে বোতলের সংখ্যা ইনপুট করে QR কোড জেনারেট করে। | `5173`/`5180` | React 19, Vite |
-| [`user-web/`](user-web/) | **ব্যবহারকারীর মোবাইল-রেসপন্সিভ ওয়েব অ্যাপ** — রেজিস্ট্রেশন/লগইন, ড্যাশবোর্ড (নাম + মোট বোতল সংখ্যা), এবং ফোনের ক্যামেরা দিয়ে QR স্ক্যান করে কাউন্ট যোগ করার সুবিধা। আলাদা অ্যাপ ইনস্টলের দরকার নেই — ব্রাউজার থেকেই চলে। | `5181` (HTTPS) | React 19, Vite, react-router-dom, html5-qrcode, socket.io-client |
+| [`backend/`](backend/) | কেন্দ্রীয় API সার্ভার — ইউজার, সেশন/QR, পয়েন্ট/লিডারবোর্ড, পার্টনার/রিডেম্পশন, বিজ্ঞাপন আপলোড, JWT অথেনটিকেশন এবং Socket.IO রিয়েল-টাইম ইভেন্ট। JSON ফাইল ডাটাবেজ (`lowdb`) ব্যবহার করে। | `4000` | Node.js, Express, lowdb, Socket.IO, multer |
+| [`web/`](web/) | **মেশিনের স্ক্রিন (কিয়স্ক)** — মেশিনের গায়ে লাগানো মনিটরে চলে। অলস অবস্থায় বিজ্ঞাপন/ভিডিও লুপ চালায়; Start চাপলে (হার্ডওয়্যার বাটন বা অন-স্ক্রিন) গণনা শুরু হয়, Stop চাপলে QR কোড দেখায়। GPIO bridge না থাকলে ম্যানুয়াল বাটন দিয়েও কাজ করে। | `5173` | React 19, Vite, socket.io-client, qrcode.react |
+| [`user-web/`](user-web/) | **ব্যবহারকারীর মোবাইল ওয়েব অ্যাপ** — রেজিস্ট্রেশন + ফোন OTP ভেরিফিকেশন, ড্যাশবোর্ড, QR স্ক্যান, মানচিত্রে RVM খোঁজা, পার্টনার অফার রিডিম, লিডারবোর্ড, প্রোফাইল। | `5181` (HTTPS) | React 19, Vite, Tailwind, react-leaflet, html5-qrcode, socket.io-client |
+| [`admin/`](admin/) | **অ্যাডমিন প্যানেল** — ইউজার/মেশিন/স্ক্যান/পার্টনার/বিজ্ঞাপন ব্যবস্থাপনা, ক্যাপাসিটি অ্যালার্ট। | `5173` (ভিন্ন dev session) | React 19, Vite |
+| [`kiosk-gpio-bridge/`](kiosk-gpio-bridge/) | **হার্ডওয়্যার ড্রাইভার** — Raspberry Pi-তে নেটিভভাবে চলে, GPIO থেকে Start/Stop বাটন ও IR সেন্সর পড়ে, লোকাল WebSocket দিয়ে `web` কিয়স্ককে জানায়। Pi ছাড়া অন্য কম্পিউটারে চালালে স্বয়ংক্রিয়ভাবে কীবোর্ড-সিমুলেটর মোডে চলে যায়। | `5055` (localhost-only) | Node.js, onoff, socket.io |
 | [`mobile/`](mobile/) | **(বর্তমানে খালি/আনইউজড)** — পূর্বে এখানে একটি Expo (React Native) অ্যাপ ছিল। নিচের নোট দেখুন। | — | — |
 
-> **নোট — `mobile/` সম্পর্কে:** আগে এই সিস্টেমের জন্য একটি Expo (React Native) মোবাইল অ্যাপ ছিল, কিন্তু Windows-এ লোকাল বিল্ডের জটিলতার (যেমন: ফাইল-পাথ-লেংথ সীমা, নেটিভ টুলচেইন সমস্যা ইত্যাদি) কারণে সেটি সরিয়ে ফেলা হয়েছে। এর পরিবর্তে `user-web` নামে একটি ব্রাউজার-ভিত্তিক সমাধান তৈরি করা হয়েছে, যেটি ফোনের যেকোনো আধুনিক ব্রাউজার (যেমন Chrome) থেকেই ক্যামেরা-অ্যাক্সেসসহ ব্যবহার করা যায় — এতে আলাদা করে অ্যাপ বিল্ড/ইনস্টল করার দরকার নেই এবং রক্ষণাবেক্ষণ অনেক সহজ।
+> **নোট — `mobile/` সম্পর্কে:** আগে এই সিস্টেমের জন্য একটি Expo (React Native) মোবাইল অ্যাপ ছিল, কিন্তু Windows-এ লোকাল বিল্ডের জটিলতার কারণে সেটি সরিয়ে ফেলা হয়েছে। এর পরিবর্তে `user-web` ব্যবহৃত হয় — কোনো অ্যাপ ইনস্টলের দরকার নেই।
 
 ---
 
@@ -21,15 +27,14 @@
 - [প্রজেক্ট স্ট্রাকচার](#প্রজেক্ট-স্ট্রাকচার)
 - [পূর্বশর্ত (Prerequisites)](#পূর্বশর্ত-prerequisites)
 - [চালু করার ধাপ](#চালু-করার-ধাপ)
-  - [১. Backend](#১-backend-অবশ্যই-প্রথমে-চালাতে-হবে--পোর্ট-4000)
-  - [২. Web frontend (অপারেটর কাউন্টার)](#২-web-frontend--অপারেটর-কাউন্টার-পোর্ট-51735180)
-  - [৩. User Web App (ব্যবহারকারীর অ্যাপ)](#৩-user-web-app--ব্যবহারকারীর-অ্যাপ-পোর্ট-5181-https)
 - [এনভায়রনমেন্ট ভেরিয়েবল](#এনভায়রনমেন্ট-ভেরিয়েবল)
+- [ফিচার তালিকা](#ফিচার-তালিকা)
 - [ব্যবহারের ধারা (Workflow)](#ব্যবহারের-ধারা-workflow)
 - [ডাটা মডেল (lowdb / `db.json`)](#ডাটা-মডেল-lowdb--dbjson)
 - [Backend API রেফারেন্স](#backend-api-রেফারেন্স)
 - [Real-time ইভেন্ট (Socket.IO)](#real-time-ইভেন্ট-socketio)
 - [QR কোড পেলোড ফরম্যাট](#qr-কোড-পেলোড-ফরম্যাট)
+- [হার্ডওয়্যার প্রোটোটাইপ (RVM মেশিন)](#হার্ডওয়্যার-প্রোটোটাইপ-rvm-মেশিন)
 - [প্রযুক্তি স্ট্যাক — বিস্তারিত](#প্রযুক্তি-স্ট্যাক--বিস্তারিত)
 - [ট্রাবলশুটিং](#ট্রাবলশুটিং)
 - [নিরাপত্তা সংক্রান্ত নোট](#নিরাপত্তা-সংক্রান্ত-নোট)
@@ -40,289 +45,435 @@
 ## আর্কিটেকচার ও ডেটা ফ্লো
 
 ```
-┌────────────────────┐        POST /api/sessions        ┌─────────────────────────┐
-│   web (অপারেটর)    │ ───────────────────────────────▶ │                         │
-│  Start → বোতল গণনা │ ◀─────────────────────────────── │                         │
-│  → Stop → QR দেখায় │     { session, qrDataUrl }       │      backend (4000)     │
-└────────────────────┘                                  │  Express + Socket.IO    │
-                                                         │  + lowdb (db.json)      │
-┌────────────────────┐    POST /api/auth/register|login │                         │
-│   user-web         │ ───────────────────────────────▶ │  ┌───────┐  ┌─────────┐ │
-│  (ব্যবহারকারীর     │ ◀─────────────────────────────── │  │ users │  │sessions │ │
-│   ফোন/ব্রাউজার)    │      { token, user }             │  └───────┘  └─────────┘ │
-│                    │                                  │                         │
-│  QR স্ক্যান (ক্যামেরা)│  POST /api/scan { token }       │                         │
-│  → টোকেন এক্সট্র্যাক্ট│ ───────────────────────────────▶ │  • টোকেন ভ্যালিডেট করে   │
-│                    │ ◀─────────────────────────────── │  • used = true সেট করে   │
-│                    │   { addedBottles, bottleCount }  │  • bottleCount আপডেট     │
-│                    │                                  │  • Socket.IO দিয়ে        │
-│  socket.io-client  │ ◀═══ "bottle-count-updated" ════ │    user:<id> রুমে পুশ    │
-│  (রিয়েল-টাইম পুশ)  │       (room: user:<userId>)      │                         │
-└────────────────────┘                                  └─────────────────────────┘
+                     ┌─────────────────────────────┐
+   বিজ্ঞাপন আপলোড     │                             │   বোতল/পয়েন্ট/মেশিন ডাটা
+  ┌───────────────┐  │                             │  ┌──────────────────────┐
+  │  admin panel  │─▶│                             │─▶│  users, sessions,     │
+  │  (5173)       │  │                             │  │  machines, scans,     │
+  └───────────────┘  │        backend (4000)       │  │  partners,            │
+                      │   Express + Socket.IO       │  │  redemptions, ads,    │
+  ┌───────────────┐  │   + lowdb (db.json)          │  │  notifications        │
+  │ kiosk-gpio-   │  │                             │  └──────────────────────┘
+  │ bridge (5055) │  │                             │
+  │ (Pi hardware) │  │                             │
+  └──────┬────────┘  └───────────────┬─────────────┘
+         │ local WebSocket           │ POST /api/sessions
+         │ (start/stop/bottle)       │ { session, qrDataUrl }
+         ▼                           │
+  ┌───────────────┐                  │
+  │ web — কিয়স্ক   │◀─────────────────┘
+  │ স্ক্রিন (5173)  │
+  │ ads → counting│      POST /api/scan { token }         ┌─────────────────┐
+  │ → QR দেখায়    │─── QR স্ক্যান হলে ─────────────────────▶│ user-web (5181) │
+  └───────────────┘                                        │ (ফোন/ব্রাউজার)   │
+                                                             └────────┬────────┘
+                                                                      │ socket.io-client
+                                          ◀── "bottle-count-updated" / "points-updated" ──┘
+                                              (room: user:<userId>)
 ```
 
-**ধাপে ধাপে:**
-1. `web` (অপারেটর UI) থেকে `POST /api/sessions` কল করে একটি নতুন "সেশন" তৈরি করা হয় — যাতে থাকে একটি র‍্যান্ডম `token` (UUID), `bottleCount`, এবং `used: false`। সার্ভার একটি QR ইমেজ (`qrDataUrl`, base64 PNG data-URL) জেনারেট করে ফেরত পাঠায়, যার ভেতরে `{ type: 'bottle-deposit', token }` JSON এনকোড করা থাকে।
-2. `user-web` থেকে ব্যবহারকারী ক্যামেরা দিয়ে QR কোড স্ক্যান করে এবং ডিকোড করা JSON থেকে `token` বের করে `POST /api/scan` কল করে (JWT-প্রটেক্টেড রুট)।
-3. ব্যাকএন্ড টোকেনটি `sessions` কালেকশনে খুঁজে দেখে এটি আগে ব্যবহার হয়েছে কিনা; না হলে সেটিকে `used: true` করে চিহ্নিত করে, ব্যবহারকারীর `bottleCount`-এ যোগ করে, এবং `users` কালেকশন আপডেট করে।
-4. সাথে সাথে Socket.IO-এর মাধ্যমে `user:<userId>` নামক রুমে `bottle-count-updated` ইভেন্ট পাঠানো হয়, যা সেই নির্দিষ্ট ব্যবহারকারীর কানেক্টেড ব্রাউজারে রিয়েল-টাইমে নতুন কাউন্ট দেখিয়ে দেয় — পেজ রিফ্রেশ করার দরকার হয় না।
-5. একই টোকেন আবার স্ক্যান করলে ব্যাকএন্ড `409 Conflict` রিটার্ন করে ("This QR code has already been used") — অর্থাৎ প্রতিটি QR কোড ঠিক একবারই কাজ করে।
+**ধাপে ধাপে (হার্ডওয়্যার মোডে):**
+1. মেশিন অলস অবস্থায় `web` কিয়স্ক স্ক্রিনে `GET /api/ads` থেকে আনা বিজ্ঞাপন/ভিডিও লুপ চলতে থাকে।
+2. ব্যবহারকারী **Start** বাটন চাপে (ফিজিক্যাল GPIO বাটন → `kiosk-gpio-bridge` → লোকাল WebSocket → `web`)। কিয়স্ক গণনা মোডে চলে যায়।
+3. প্রতিটি বোতল IR সেন্সর অতিক্রম করলে `kiosk-gpio-bridge` একটি `bottle` ইভেন্ট পাঠায়, কিয়স্ক স্ক্রিনে লাইভ সংখ্যা বাড়তে থাকে।
+4. **Stop** বাটন চাপলে কিয়স্ক `POST /api/sessions { bottleCount, machineId }` কল করে — ব্যাকএন্ড একটি র‍্যান্ডম `token` (UUID) সহ সেশন তৈরি করে এবং QR ইমেজ (base64 PNG) ফেরত পাঠায়, যার ভেতরে `{ type: 'bottle-deposit', token }` এনকোড করা থাকে।
+5. `user-web`-এ ব্যবহারকারী ক্যামেরা দিয়ে সেই QR স্ক্যান করে `POST /api/scan { token }` কল করে (JWT-প্রটেক্টেড)।
+6. ব্যাকএন্ড টোকেন ভ্যালিডেট করে `used: true` করে, ব্যবহারকারীর `bottleCount` ও `points` (৫ পয়েন্ট/বোতল) আপডেট করে, স্ক্যান হিস্টোরি রেকর্ড করে, এবং Socket.IO দিয়ে `user:<id>` রুমে `bottle-count-updated` পুশ করে — `user-web`-এর ড্যাশবোর্ড সাথে সাথে আপডেট হয়।
+7. কিয়স্ক স্ক্রিন কিছুক্ষণ (ডিফল্ট ৩০ সেকেন্ড) QR দেখানোর পর নিজে থেকেই আবার বিজ্ঞাপন লুপে ফিরে যায়।
+8. একই টোকেন আবার স্ক্যান করলে ব্যাকএন্ড `409 Conflict` রিটার্ন করে — প্রতিটি QR কোড ঠিক একবারই কাজ করে।
+
+ম্যানুয়াল মোডে ধাপ ২-৪ একই কিয়স্ক স্ক্রিনের অন-স্ক্রিন বাটন দিয়ে করা যায় — কোনো হার্ডওয়্যার লাগে না।
 
 ## প্রজেক্ট স্ট্রাকচার
 
 ```
 server/
+├── docs/
+│   └── circuit-diagram.svg     # RVM ওয়্যারিং ডায়াগ্রাম (নিচের হার্ডওয়্যার সেকশনে দেখুন)
+│
 ├── backend/                    # Express API + Socket.IO + lowdb
 │   ├── data/
 │   │   └── db.json             # JSON ফাইল ডাটাবেজ (gitignored, রানটাইমে অটো-তৈরি হয়)
+│   ├── uploads/ads/             # আপলোড করা বিজ্ঞাপনের ছবি/ভিডিও (gitignored)
+│   ├── scripts/
+│   │   └── seed.js             # ডেমো মেশিন + পার্টনার ডাটা সীড করে (npm run seed)
 │   ├── src/
-│   │   ├── db.js               # lowdb ইনস্ট্যান্স সেটআপ (ডিফল্ট: { users: [], sessions: [] })
+│   │   ├── db.js               # lowdb সেটআপ + লেগ্যাসি অ্যাকাউন্ট auto-migration
 │   │   ├── server.js           # Express অ্যাপ + HTTP সার্ভার + Socket.IO বুটস্ট্র্যাপ
+│   │   ├── lib/
+│   │   │   ├── points.js       # পয়েন্ট/লেভেল/CO2 হিসাব
+│   │   │   └── geo.js          # মেশিনের lat/lng fallback + দূরত্ব হিসাব
 │   │   ├── middleware/
-│   │   │   └── auth.js         # requireAuth — JWT ভেরিফিকেশন মিডলওয়্যার
+│   │   │   ├── auth.js         # requireAuth — ইউজার JWT
+│   │   │   └── adminAuth.js    # requireAdmin — অ্যাডমিন JWT
 │   │   └── routes/
-│   │       ├── auth.js         # /api/auth/{register,login,me}
-│   │       ├── sessions.js     # /api/sessions — QR সেশন তৈরি ও লুকআপ
-│   │       └── scan.js         # /api/scan — QR টোকেন রিডিম করার রাউট (Socket.IO-নির্ভর)
-│   ├── .env                    # PORT, JWT_SECRET (gitignored)
+│   │       ├── auth.js         # register/login/me + phone OTP send/verify
+│   │       ├── sessions.js     # QR সেশন তৈরি ও লুকআপ
+│   │       ├── scan.js         # QR টোকেন রিডিম (পয়েন্ট/বোতল আপডেট + Socket.IO)
+│   │       ├── machines.js     # মেশিন CRUD (lat/lng সহ)
+│   │       ├── partners.js     # পার্টনার/অফার + পয়েন্ট রিডেম্পশন
+│   │       ├── leaderboard.js  # সাপ্তাহিক/মাসিক/সর্বকালের র‍্যাঙ্কিং
+│   │       ├── me.js           # নিজের স্ট্যাটস/অ্যাক্টিভিটি/ফেভারিট
+│   │       ├── ads.js          # কিয়স্ক বিজ্ঞাপন আপলোড/CRUD (multer)
+│   │       └── admin.js        # অ্যাডমিন স্ট্যাটস/ইউজার/স্ক্যান/নোটিফিকেশন
+│   ├── .env                    # PORT, JWT_SECRET, ADMIN_* (gitignored)
 │   └── package.json
 │
-├── web/                        # অপারেটর কাউন্টার UI (React + Vite)
+├── web/                         # মেশিনের কিয়স্ক স্ক্রিন (React + Vite)
 │   ├── src/
-│   │   ├── App.jsx             # Start/Stop স্টেট-মেশিন (idle → counting → generating → done)
-│   │   ├── api.js              # axios ইনস্ট্যান্স + createSession()
+│   │   ├── App.jsx              # idle(ads) → counting → generating → qr স্টেট-মেশিন
+│   │   ├── AdCarousel.jsx       # অলস অবস্থায় বিজ্ঞাপন/ভিডিও লুপ
+│   │   ├── useGpioBridge.js     # kiosk-gpio-bridge-এর সাথে WebSocket কানেকশন
+│   │   ├── api.js               # axios + fetchAds/createSession/getMachines
 │   │   ├── App.css / index.css
 │   │   └── main.jsx
-│   ├── .env                    # VITE_API_BASE_URL
+│   ├── .env                     # VITE_API_BASE_URL, VITE_GPIO_BRIDGE_URL, VITE_MACHINE_ID
 │   └── package.json
 │
-├── user-web/                   # ব্যবহারকারীর মোবাইল-রেসপন্সিভ ওয়েব অ্যাপ (React + Vite, HTTPS)
+├── kiosk-gpio-bridge/            # Pi-তে নেটিভভাবে চলা GPIO ড্রাইভার (ব্রাউজারে চলে না)
+│   ├── src/index.js              # onoff দিয়ে GPIO পড়ে; Pi না হলে কীবোর্ড-সিমুলেটর ফলব্যাক
+│   ├── kiosk-gpio-bridge.service # systemd ইউনিট (Pi বুট হলে অটো-স্টার্ট)
+│   ├── .env.example              # পিন নাম্বার, ডিবাউন্স টাইমিং
+│   └── package.json
+│
+├── user-web/                    # ব্যবহারকারীর মোবাইল ওয়েব অ্যাপ (React + Vite, HTTPS, Tailwind)
 │   ├── src/
-│   │   ├── App.jsx             # রাউট সংজ্ঞায়ন (Protected/PublicOnly রাউট গার্ড)
-│   │   ├── AuthContext.jsx     # লগইন/রেজিস্টার/লগআউট স্টেট, JWT পার্সিস্টেন্স, Socket.IO কানেকশন
-│   │   ├── api.js              # axios ইনস্ট্যান্স + auth/scan API কল + এরর-মেসেজ ম্যাপিং
-│   │   └── pages/
-│   │       ├── LoginPage.jsx
-│   │       ├── RegisterPage.jsx
-│   │       ├── DashboardPage.jsx   # নাম + মোট বোতল সংখ্যা + "QR স্ক্যান করুন" বাটন
-│   │       └── ScanPage.jsx        # html5-qrcode দিয়ে লাইভ ক্যামেরা স্ক্যানার
-│   ├── .env                    # VITE_API_BASE_URL, VITE_SOCKET_URL (লোকাল IP দিয়ে সেট করতে হয়)
-│   ├── vite.config.js          # @vitejs/plugin-basic-ssl দিয়ে HTTPS dev server, host 0.0.0.0:5181
+│   │   ├── App.jsx              # রাউট গার্ড: Public/Protected/Verify + onboarding gate
+│   │   ├── AuthContext.jsx      # লগইন/রেজিস্টার স্টেট, JWT পার্সিস্টেন্স, Socket.IO
+│   │   ├── api.js               # axios + সব এন্ডপয়েন্টের wrapper
+│   │   ├── components/          # Icon, TopAppBar, BottomNav
+│   │   └── pages/                # Splash, Onboarding, Login, Register, OTP,
+│   │                              # Dashboard, Scan, Success, Map, Partners,
+│   │                              # PartnerDetail, Leaderboard, Profile, History, Info
+│   ├── .env                     # VITE_API_BASE_URL, VITE_SOCKET_URL (লোকাল IP দিয়ে)
+│   ├── vite.config.js           # HTTPS dev server (basicSsl), PUNOSHRISTI_NO_HTTPS=1 দিয়ে বন্ধ করা যায়
 │   └── package.json
 │
-└── mobile/                     # খালি — পূর্বের Expo অ্যাপের জায়গা (উপরের নোট দেখুন)
+├── admin/                       # অ্যাডমিন প্যানেল (React + Vite)
+│   ├── src/
+│   │   ├── AdminAuthContext.jsx
+│   │   ├── api.js
+│   │   ├── components/Layout.jsx
+│   │   └── pages/                # Dashboard, Users, Machines, Partners, Ads, Scans
+│   ├── .env
+│   └── package.json
+│
+└── mobile/                      # খালি — পূর্বের Expo অ্যাপের জায়গা (উপরের নোট দেখুন)
 ```
 
 ## পূর্বশর্ত (Prerequisites)
 
-- **Node.js** (LTS সংস্করণ, যেমন v18+) এবং **npm**
-- একটি লোকাল **Wi-Fi নেটওয়ার্ক** যাতে কম্পিউটার ও ফোন একসাথে যুক্ত থাকতে পারে (ফোন থেকে `user-web` অ্যাক্সেস করার জন্য আবশ্যক)
+- **Node.js** (LTS সংস্করণ, v18+) এবং **npm**
+- একটি লোকাল **Wi-Fi নেটওয়ার্ক** যাতে কম্পিউটার ও ফোন একসাথে যুক্ত থাকতে পারে
 - ফোনে একটি আধুনিক ব্রাউজার (যেমন **Chrome**) — ক্যামেরা-অ্যাক্সেস সাপোর্টসহ
 - কম্পিউটারের **লোকাল IP অ্যাড্রেস** (Windows-এ `ipconfig` চালিয়ে "IPv4 Address" দেখুন, যেমন `192.168.0.5`)
+- হার্ডওয়্যার প্রোটোটাইপ চালাতে চাইলে: একটি **Raspberry Pi** (3B+/4), মনিটর, IR অবস্টাকল সেন্সর, দুটি পুশবাটন — দেখুন [হার্ডওয়্যার প্রোটোটাইপ](#হার্ডওয়্যার-প্রোটোটাইপ-rvm-মেশিন)
 
 ## চালু করার ধাপ
 
-প্রতিটি সাব-প্রজেক্ট স্বতন্ত্র — তিনটি আলাদা টার্মিনাল/উইন্ডো লাগবে এবং **নির্দিষ্ট ক্রমে চালাতে হবে** (backend সবার আগে, কারণ web ও user-web উভয়েই backend API-র উপর নির্ভরশীল)।
+প্রতিটি সাব-প্রজেক্ট স্বতন্ত্র — আলাদা টার্মিনাল/উইন্ডোতে চালাতে হবে, **backend সবার আগে** (সবাই এর উপর নির্ভরশীল)।
 
-### ১. Backend (অবশ্যই প্রথমে চালাতে হবে — পোর্ট 4000)
+### ১. Backend — পোর্ট 4000
 ```bash
 cd backend
 npm install
 npm run dev
 ```
-এটি `http://<আপনার-কম্পিউটারের-IP>:4000` এ চলবে (`server.listen(PORT, '0.0.0.0', ...)` — তাই একই নেটওয়ার্কের যেকোনো ডিভাইস থেকে অ্যাক্সেসযোগ্য)। ডাটা সংরক্ষিত হয় `backend/data/db.json` ফাইলে (প্রথমবার চালু হলে স্বয়ংক্রিয়ভাবে তৈরি হয়, gitignored)।
+`0.0.0.0:4000`-এ চলে (একই নেটওয়ার্কের যেকোনো ডিভাইস থেকে অ্যাক্সেসযোগ্য)। প্রথমবার ডেমো মেশিন/পার্টনার ডাটা লোড করতে চাইলে:
+```bash
+npm run seed
+```
+> প্রোডাকশনের জন্য `npm start`; ডেভেলপমেন্টে `npm run dev` (nodemon, অটো-রিস্টার্ট)।
 
-> প্রোডাকশনের জন্য `npm start` ব্যবহার করুন (plain `node`); ডেভেলপমেন্টে `npm run dev` (`nodemon`, ফাইল পরিবর্তনে অটো-রিস্টার্ট) সুবিধাজনক।
-
-### ২. Web frontend — অপারেটর কাউন্টার (পোর্ট 5173/5180)
+### ২. Web — মেশিনের কিয়স্ক স্ক্রিন — পোর্ট 5173
 ```bash
 cd web
 npm install
 npm run dev
 ```
-ব্রাউজারে খুলুন (Vite যে localhost URL দেখাবে), **Start** চাপুন, বোতলের সংখ্যা লিখুন, **Stop** চাপুন — তাহলেই QR কোড জেনারেট হবে।
+ব্রাউজারে খুলুন — বিজ্ঞাপন/ভিডিও লুপ দেখাবে (অ্যাডমিন থেকে কিছু আপলোড না করলে খালি থাকবে)। **Start** চাপুন (হার্ডওয়্যার বাটন অথবা অন-স্ক্রিন), বোতল গণনা হবে, **Stop** চাপলে QR দেখাবে। হার্ডওয়্যার বসানোর আগে `kiosk-gpio-bridge` ছাড়াই এটা সম্পূর্ণ কাজ করে (ম্যানুয়াল `+1` ও Stop বাটন দিয়ে)।
 
-### ৩. User Web App — ব্যবহারকারীর অ্যাপ (পোর্ট 5181, HTTPS)
-**গুরুত্বপূর্ণ:** ফোন ও কম্পিউটার একই WiFi নেটওয়ার্কে থাকতে হবে। ক্যামেরা ব্যবহারের জন্য (ব্রাউজার সিকিউরিটি নীতি — `getUserMedia` শুধু সিকিউর কনটেক্সটে কাজ করে) এই অ্যাপটি **HTTPS**-এ চলে — তাই প্রথমবার একটি "এই সংযোগটি ব্যক্তিগত নয়" সতর্কবার্তা দেখাবে, যা একবার অনুমোদন করে নিলেই হবে (সেলফ-সাইনড সার্টিফিকেট, লোকাল টেস্টিংয়ের জন্য সম্পূর্ণ নিরাপদ)।
+### ৩. kiosk-gpio-bridge — শুধু Raspberry Pi-তে দরকার — পোর্ট 5055
+```bash
+cd kiosk-gpio-bridge
+npm install
+cp .env.example .env   # প্রয়োজনে পিন নাম্বার পরিবর্তন করুন
+npm start
+```
+Raspberry Pi না হলে (যেমন ডেভেলপমেন্ট ল্যাপটপে) এটি স্বয়ংক্রিয়ভাবে **কীবোর্ড-সিমুলেটর মোডে** চলে যাবে — টার্মিনালে `s` + Enter = Start, `x` + Enter = Stop, `b` + Enter = একটি বোতল, যাতে হার্ডওয়্যার ছাড়াই পুরো ফ্লো টেস্ট করা যায়। Pi-তে বুট হওয়ার সাথে সাথে অটো-স্টার্ট করতে `kiosk-gpio-bridge.service` ব্যবহার করুন (ইনস্টল ধাপ ফাইলের মধ্যেই কমেন্ট আকারে আছে)।
 
-1. আপনার কম্পিউটারের লোকাল IP বের করুন (Windows-এ `ipconfig` চালিয়ে "IPv4 Address" দেখুন — যেমন `192.168.0.5`)। প্রয়োজনে `user-web/.env` ফাইলে `VITE_API_BASE_URL` ও `VITE_SOCKET_URL`-এ সেই IP বসান (নিচের [এনভায়রনমেন্ট ভেরিয়েবল](#এনভায়রনমেন্ট-ভেরিয়েবল) সেকশন দেখুন)।
-2. কমান্ড চালান:
-   ```bash
-   cd user-web
-   npm install
-   npm run dev
-   ```
-3. টার্মিনালে দেখানো **Network** URL-টি (যেমন `https://192.168.0.5:5181`) ফোনের ব্রাউজারে (Chrome) খুলুন।
-4. "সংযোগটি ব্যক্তিগত নয়" সতর্কতা এলে **Advanced/বিস্তারিত → Proceed/চালিয়ে যান** চাপুন (এটি একবারই করতে হবে — সেলফ-সাইনড সার্টিফিকেট ব্যবহারের কারণে আসে)।
-5. রেজিস্ট্রেশন/লগইন করুন, এরপর "QR কোড স্ক্যান করুন" চাপলে ক্যামেরা পারমিশন চাইবে — অনুমতি দিন।
+### ৪. User Web App — ব্যবহারকারীর অ্যাপ — পোর্ট 5181 (HTTPS)
+```bash
+cd user-web
+npm install
+npm run dev
+```
+প্রথমে `user-web/.env`-এ `VITE_API_BASE_URL`/`VITE_SOCKET_URL`-এ কম্পিউটারের লোকাল IP বসান (নিচে দেখুন), তারপর টার্মিনালে দেখানো **Network** URL (যেমন `https://192.168.0.5:5181`) ফোনের ব্রাউজারে খুলুন। সেলফ-সাইনড সার্টিফিকেট সতর্কতা এলে **Advanced → Proceed** চাপুন (একবারই)।
+
+### ৫. Admin Panel — পোর্ট 5173 (ভিন্ন টার্মিনালে চালালে Vite নিজে থেকেই ভিন্ন পোর্ট নেবে)
+```bash
+cd admin
+npm install
+npm run dev
+```
+ডিফল্ট লগইন: `admin@punoshristi.com` / `admin@1234` (`backend/.env`-এ `ADMIN_EMAIL`/`ADMIN_PASSWORD` দিয়ে পরিবর্তনযোগ্য)।
 
 ## এনভায়রনমেন্ট ভেরিয়েবল
 
-প্রতিটি সাব-প্রজেক্টের নিজস্ব `.env` ফাইল আছে (সবগুলোই gitignored — রিপোতে কমিট হয় না)।
+প্রতিটি সাব-প্রজেক্টের নিজস্ব `.env` (সবগুলোই gitignored)।
 
 ### `backend/.env`
 | ভেরিয়েবল | ডিফল্ট | বিবরণ |
 | --- | --- | --- |
-| `PORT` | `4000` | API সার্ভার যে পোর্টে শুনবে |
-| `JWT_SECRET` | `dev-secret` | JWT সাইন/ভেরিফাই করার সিক্রেট কী — **প্রোডাকশনে অবশ্যই একটি শক্তিশালী, গোপন মান দিয়ে পরিবর্তন করুন** |
+| `PORT` | `4000` | API সার্ভার পোর্ট |
+| `JWT_SECRET` | `dev-secret` | ইউজার JWT সাইনিং কী — **প্রোডাকশনে পরিবর্তন আবশ্যক** |
+| `ADMIN_JWT_SECRET` | (কোডে ডিফল্ট) | অ্যাডমিন JWT সাইনিং কী |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `admin@punoshristi.com` / `admin@1234` | অ্যাডমিন লগইন ক্রেডেনশিয়াল |
+| `NODE_ENV` | (unset) | `production` না হলে OTP endpoint রেসপন্সে `devCode` পাঠায় (SMS গেটওয়ে ছাড়া টেস্ট করার জন্য) |
 
-### `web/.env`
+### `web/.env` (কিয়স্ক)
 | ভেরিয়েবল | ডিফল্ট | বিবরণ |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | `http://localhost:4000/api` | অপারেটর UI যে ব্যাকএন্ড API-তে রিকোয়েস্ট পাঠাবে |
+| `VITE_API_BASE_URL` | `http://localhost:4000/api` | ব্যাকএন্ড API |
+| `VITE_GPIO_BRIDGE_URL` | `http://localhost:5055` | লোকাল GPIO bridge (একই ডিভাইসে চলে) |
+| `VITE_MACHINE_ID` | (unset) | সেট করলে এই কিয়স্ক একটি নির্দিষ্ট মেশিনে লক হয়ে যায় (মেশিন-পিকার ড্রপডাউন হাইড হয়ে যায়) — প্রোডাকশন হার্ডওয়্যারে সেট করুন |
+
+### `kiosk-gpio-bridge/.env` (শুধু Pi-তে)
+`PORT`, `START_BUTTON_PIN`, `STOP_BUTTON_PIN`, `IR_SENSOR_PIN`, `BUZZER_PIN`, `IR_ACTIVE_LOW`, `IR_DEBOUNCE_MS`, `BUTTON_DEBOUNCE_MS` — সব ভেরিয়েবলের ব্যাখ্যা `.env.example`-এ কমেন্ট আকারে আছে।
 
 ### `user-web/.env`
 | ভেরিয়েবল | ডিফল্ট | বিবরণ |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | `http://localhost:4000/api` | REST API-র বেস URL — **ফোন থেকে অ্যাক্সেস করতে হলে অবশ্যই কম্পিউটারের লোকাল IP দিয়ে সেট করতে হবে** (যেমন `http://192.168.0.5:4000/api`), `localhost` ফোন থেকে কাজ করবে না |
-| `VITE_SOCKET_URL` | `http://localhost:4000` | Socket.IO সার্ভারের URL — একই কারণে লোকাল IP দিয়ে সেট করতে হবে (যেমন `http://192.168.0.5:4000`) |
+| `VITE_API_BASE_URL` | `http://localhost:4000/api` | **ফোন থেকে অ্যাক্সেস করতে লোকাল IP দিয়ে সেট করতে হবে** |
+| `VITE_SOCKET_URL` | `http://localhost:4000` | একই কারণে লোকাল IP |
 
-> মনে রাখবেন: Vite-এ `.env` পরিবর্তন করার পর ডেভ সার্ভার রিস্টার্ট করতে হয়, কারণ `import.meta.env` ভ্যালুগুলো বিল্ড-টাইমে ইনলাইন করা হয়।
+### `admin/.env`
+`VITE_API_BASE_URL`, `VITE_SOCKET_URL` — অ্যাডমিন ল্যাপটপ থেকে চালালে `localhost` যথেষ্ট।
+
+> মনে রাখবেন: Vite-এ `.env` পরিবর্তনের পর ডেভ সার্ভার রিস্টার্ট করতে হয়।
+
+## ফিচার তালিকা
+
+- **অথ + ফোন যাচাইকরণ:** ইমেইল/ফোন + পাসওয়ার্ড রেজিস্ট্রেশন/লগইন, ৬-সংখ্যার OTP দিয়ে ফোন ভেরিফিকেশন (SMS গেটওয়ে না থাকায় কোড সার্ভার লগে ও dev রেসপন্সে দেখানো হয় — বাস্তব SMS/ইমেইল গেটওয়ে বসানো ভবিষ্যতের কাজ)
+- **Eco-Points ইকোনমি:** প্রতি বোতলে ৫ পয়েন্ট, লাইফটাইম পয়েন্ট অনুযায়ী Eco Warrior লেভেল (৫টি ধাপ), আনুমানিক CO2-সাশ্রয় হিসাব
+- **লিডারবোর্ড:** সাপ্তাহিক/মাসিক/সর্বকালের র‍্যাঙ্কিং, নিজের র‍্যাঙ্ক আলাদা কার্ডে
+- **পার্টনার ও রিডেম্পশন:** ক্যাফে/দোকান তালিকা, অফার, পয়েন্ট দিয়ে সরাসরি রিডিম (ব্যালেন্স চেক সহ)
+- **মানচিত্র:** react-leaflet + OpenStreetMap দিয়ে আসল মেশিনের লোকেশন দেখায়, দূরত্ব হিসাব, ফেভারিট মেশিন, Google Maps ডিরেকশন লিংক
+- **কিয়স্ক হার্ডওয়্যার:** IR সেন্সর দিয়ে অটো-কাউন্টিং, ফিজিক্যাল Start/Stop বাটন, অলস অবস্থায় বিজ্ঞাপন/ভিডিও লুপ (অ্যাডমিন থেকে ম্যানেজড), হার্ডওয়্যার না থাকলে ম্যানুয়াল ফলব্যাক
+- **অ্যাডমিন প্যানেল:** ইউজার/স্ক্যান/মেশিন/পার্টনার/অফার/বিজ্ঞাপন ব্যবস্থাপনা, মেশিন ক্যাপাসিটি ৮০%+ হলে রিয়েল-টাইম অ্যালার্ট
 
 ## ব্যবহারের ধারা (Workflow)
-1. ফোনের ব্রাউজারে `user-web` অ্যাপ খুলে রেজিস্ট্রেশন/লগইন করুন।
-2. কম্পিউটারে ওয়েব UI (`web`)-তে **Start** চাপুন → বোতলের সংখ্যা লিখুন (যেমন ১০) → **Stop** চাপুন → QR কোড দেখাবে।
-3. ফোনের ড্যাশবোর্ডে "QR কোড স্ক্যান করুন" চাপুন এবং স্ক্রিনে দেখানো QR কোডটি ক্যামেরা দিয়ে স্ক্যান করুন।
-4. সাথে সাথে আপনার অ্যাকাউন্টের বোতল সংখ্যা বেড়ে যাবে (রিয়েল-টাইম, Socket.IO এর মাধ্যমে — পেজ রিফ্রেশের দরকার নেই)।
-5. একই QR কোড আবার স্ক্যান করলে "এই QR কোড ইতিমধ্যে ব্যবহার করা হয়েছে" বার্তা দেখাবে — প্রতিটি কোড শুধু একবারই কাজ করে।
+
+**সাধারণ (ম্যানুয়াল/হার্ডওয়্যার উভয় মোডে একই):**
+1. ফোনের ব্রাউজারে `user-web` খুলে রেজিস্ট্রেশন করুন → OTP ভেরিফাই করুন → ড্যাশবোর্ডে যান।
+2. মেশিনের স্ক্রিনে (`web`) **Start** চাপুন → বোতল জমা দিন (IR সেন্সর নিজে গণনা করে, অথবা ম্যানুয়ালি `+1` চাপুন) → **Stop** চাপুন → QR কোড দেখাবে।
+3. ফোন দিয়ে QR স্ক্যান করুন (`user-web`-এর Scan পেজ, অথবা ম্যানুয়াল কোড এন্ট্রি)।
+4. সাথে সাথে পয়েন্ট/বোতল সংখ্যা বেড়ে যাবে (রিয়েল-টাইম, রিফ্রেশের দরকার নেই), এবং সাকসেস স্ক্রিনে পয়েন্ট/র‍্যাঙ্ক দেখাবে।
+5. পার্টনার পেজে গিয়ে পয়েন্ট দিয়ে অফার রিডিম করুন, অথবা লিডারবোর্ডে নিজের অবস্থান দেখুন।
+6. একই QR আবার স্ক্যান করলে "already been used" — প্রতিটি কোড শুধু একবার কাজ করে।
 
 ## ডাটা মডেল (lowdb / `db.json`)
 
-ব্যাকএন্ড একটি একক JSON ফাইল (`backend/data/db.json`) ডাটাবেজ হিসেবে ব্যবহার করে ([`lowdb`](https://github.com/typicode/lowdb) দিয়ে), যাতে দুটি কালেকশন থাকে:
+**`users`** — `id, name, email, phone, passwordHash, bottleCount, points, phoneVerified, favorites[], otp, createdAt`
+**`sessions`** (QR টোকেন) — `id, token, bottleCount, machineId, machineName, machineLocation, used, redeemedBy, redeemedAt, createdAt`
+**`machines`** — `id, name, location, address, capacity, currentBottles, active, lat, lng, createdAt` (lat/lng না থাকলে API রেসপন্সে একটি স্থিতিশীল আনুমানিক অবস্থান যোগ হয়)
+**`scans`** — `id, userId, machineId, sessionId, bottleCount, pointsEarned, createdAt`
+**`partners`** — `id, name, category, address, hours, rating, distanceKm, featured, offers: [{id, title, pointsCost, icon}]`
+**`redemptions`** — `id, userId, partnerId, offerId, pointsCost, createdAt`
+**`ads`** — `id, title, type ('image'|'video'), filename, durationSeconds, order, active, createdAt`
+**`notifications`** — মেশিন ক্যাপাসিটি অ্যালার্ট (অ্যাডমিন-সাইড)
 
-**`users`**
-| ফিল্ড | টাইপ | বিবরণ |
-| --- | --- | --- |
-| `id` | string (UUID) | প্রাইমারি কী |
-| `name` | string | ব্যবহারকারীর নাম |
-| `email` | string | লোয়ারকেস+ট্রিম করা, ইউনিক |
-| `passwordHash` | string | bcrypt হ্যাশ (raw পাসওয়ার্ড কখনো সংরক্ষিত হয় না) |
-| `bottleCount` | number | জমাকৃত মোট বোতল সংখ্যা (ডিফল্ট `0`) |
-| `createdAt` | ISO datetime string | অ্যাকাউন্ট তৈরির সময় |
-
-**`sessions`** (= QR কোড সেশন/টোকেন)
-| ফিল্ড | টাইপ | বিবরণ |
-| --- | --- | --- |
-| `id` | string (UUID) | প্রাইমারি কী |
-| `token` | string (UUID) | QR কোডে এনকোড হওয়া এক-বার-ব্যবহারযোগ্য টোকেন |
-| `bottleCount` | number | এই সেশনে যত বোতল গণনা করা হয়েছে |
-| `used` | boolean | টোকেনটি রিডিম হয়ে গেছে কিনা |
-| `redeemedBy` | string \| null | কোন `userId` এটি রিডিম করেছে |
-| `redeemedAt` | ISO datetime string \| null | রিডিম হওয়ার সময় |
-| `createdAt` | ISO datetime string | সেশন তৈরির সময় |
-
-> ⚠️ যেহেতু এটি একটি ফাইল-ভিত্তিক JSON ডাটাবেজ, এটি কেবলমাত্র লোকাল ডেভেলপমেন্ট/ছোট-পরিসরের ব্যবহারের জন্য উপযুক্ত — কনকারেন্ট রাইট/স্কেলিং দরকার হলে PostgreSQL/MongoDB-এর মতো প্রকৃত ডাটাবেজে মাইগ্রেট করা উচিত।
+> ⚠️ ফাইল-ভিত্তিক JSON ডাটাবেজ শুধু লোকাল ডেভেলপমেন্ট/ছোট-পরিসরের জন্য উপযুক্ত — বড় পরিসরে PostgreSQL/MongoDB-এ মাইগ্রেট করা উচিত।
 
 ## Backend API রেফারেন্স
 
-বেস URL: `http://<host>:4000/api` । সব রেসপন্স JSON। প্রটেক্টেড রুটে `Authorization: Bearer <token>` হেডার আবশ্যক।
+বেস URL: `http://<host>:4000/api`। প্রটেক্টেড রুটে `Authorization: Bearer <token>` আবশ্যক।
 
-### স্বাস্থ্য পরীক্ষা
-| মেথড ও পাথ | অথ | বিবরণ |
-| --- | --- | --- |
-| `GET /api/health` | না | `{ status: 'ok' }` রিটার্ন করে — সার্ভার চালু আছে কিনা যাচাই করতে ব্যবহৃত হয় |
-
-### Auth (`/api/auth`)
-| মেথড ও পাথ | অথ | বডি | রেসপন্স |
+| গ্রুপ | মেথড ও পাথ | অথ | বিবরণ |
 | --- | --- | --- | --- |
-| `POST /register` | না | `{ name, email, password }` | `201` → `{ token, user }` (ইমেইল ডুপ্লিকেট হলে `409`) |
-| `POST /login` | না | `{ email, password }` | `200` → `{ token, user }` (ভুল হলে `401 Invalid email or password`) |
-| `GET /me` | ✅ JWT | — | `200` → `{ user }` — বর্তমান লগইন করা ব্যবহারকারীর তথ্য (টোকেন রিফ্রেশ/পুনঃযাচাইয়ের জন্য ব্যবহৃত) |
-
-`user` অবজেক্টে কখনো `passwordHash` থাকে না — শুধু `{ id, name, email, bottleCount, createdAt }`।
-
-### Sessions / QR (`/api/sessions`)
-| মেথড ও পাথ | অথ | বডি | রেসপন্স |
-| --- | --- | --- | --- |
-| `POST /` | না (অপারেটর UI থেকে কল হয়) | `{ bottleCount: number }` (ধনাত্মক পূর্ণসংখ্যা হতে হবে) | `201` → `{ session: { id, bottleCount, token, used, createdAt }, qrDataUrl }` — `qrDataUrl` একটি base64 PNG data-URL যাতে QR ইমেজ এনকোড করা থাকে |
-| `GET /:id` | না | — | `200` → `{ session }`, না পেলে `404` |
-
-`bottleCount` ধনাত্মক পূর্ণসংখ্যা না হলে `400 { message: 'bottleCount must be a positive whole number' }` রিটার্ন করে।
-
-### Scan / Redeem (`/api/scan`)
-| মেথড ও পাথ | অথ | বডি | রেসপন্স |
-| --- | --- | --- | --- |
-| `POST /` | ✅ JWT | `{ token: string }` | সফল হলে `200` → `{ message, addedBottles, bottleCount, redeemedAt }` |
-
-সম্ভাব্য এরর রেসপন্স:
-- `400` — `token is required`
-- `404` — `QR code not recognized` (টোকেন সিস্টেমে নেই)
-- `409` — `This QR code has already been used` (ইতিমধ্যে রিডিম হয়েছে — ডাবল-স্ক্যান প্রতিরোধ)
-
-সফল রিডিমে ব্যাকএন্ড একসাথে: (১) সেশনকে `used: true` চিহ্নিত করে, (২) ব্যবহারকারীর `bottleCount` আপডেট করে, এবং (৩) `bottle-count-updated` Socket.IO ইভেন্ট পুশ করে — সবকিছু একই রিকোয়েস্টে synchronous ভাবে।
+| স্বাস্থ্য | `GET /health` | না | `{ status: 'ok' }` |
+| Auth | `POST /auth/register` | না | `{ name, email, password, phone }` → `201 { token, user }` |
+| Auth | `POST /auth/login` | না | `{ emailOrPhone, password }` → `200 { token, user }` |
+| Auth | `GET /auth/me` | ✅ | বর্তমান ইউজার |
+| Auth | `POST /auth/otp/send` | ✅ | নতুন ৬-সংখ্যার কোড পাঠায় (console-এ লগ হয়, dev-এ রেসপন্সেও) |
+| Auth | `POST /auth/otp/verify` | ✅ | `{ code }` → ভেরিফাই হলে `phoneVerified: true` |
+| Sessions | `POST /sessions` | না | `{ bottleCount, machineId }` → `{ session, qrDataUrl }` (কিয়স্ক থেকে কল হয়) |
+| Sessions | `GET /sessions/:id` | না | সেশন লুকআপ |
+| Scan | `POST /scan` | ✅ | `{ token }` → বোতল/পয়েন্ট যোগ, Socket.IO পুশ |
+| Machines | `GET /machines` | না | সক্রিয় মেশিন তালিকা (lat/lng, fillPercent, status সহ) |
+| Machines | `GET/POST/PUT/DELETE /machines/*` | ✅ admin | মেশিন CRUD |
+| Partners | `GET /partners`, `GET /partners/:id` | না | পার্টনার + অফার তালিকা |
+| Partners | `POST /partners/:id/redeem` | ✅ | `{ offerId }` → পয়েন্ট কেটে রিডিম করে |
+| Partners | admin CRUD | ✅ admin | পার্টনার/অফার তৈরি-আপডেট-ডিলিট |
+| Leaderboard | `GET /leaderboard?range=week\|month\|all` | না | টপ ৫০ |
+| Leaderboard | `GET /leaderboard/me?range=...` | ✅ | নিজের র‍্যাঙ্ক |
+| My | `GET /my/stats`, `GET /my/activity`, `GET /my/scans` | ✅ | ড্যাশবোর্ড/প্রোফাইল ডাটা |
+| My | `POST /my/favorites/:machineId` | ✅ | ফেভারিট টগল |
+| Ads | `GET /ads` | না | কিয়স্কের জন্য সক্রিয় বিজ্ঞাপন তালিকা |
+| Ads | `POST /ads` (multipart) | ✅ admin | ছবি/ভিডিও আপলোড |
+| Ads | `PUT/DELETE /ads/:id` | ✅ admin | মেটাডাটা/অর্ডার/সক্রিয়তা আপডেট, ডিলিট |
+| Admin | `/admin/*` | ✅ admin | স্ট্যাটস, ইউজার, স্ক্যান হিস্টোরি, নোটিফিকেশন |
 
 ## Real-time ইভেন্ট (Socket.IO)
 
-- **কানেকশন/অথ:** ক্লায়েন্ট `io(SOCKET_URL, { auth: { token } })` দিয়ে কানেক্ট করে, যেখানে `token` একটি বৈধ JWT। সার্ভার-সাইড middleware (`server.js`-এ `io.use(...)`) টোকেন ভেরিফাই করে; ব্যর্থ হলে কানেকশন প্রত্যাখ্যাত হয় (`Authentication required` / `Invalid or expired token`)।
-- **রুম:** প্রতিটি অথেনটিকেটেড সকেট স্বয়ংক্রিয়ভাবে `user:<userId>` নামক একটি রুমে যুক্ত হয় — ফলে প্রতিটি ব্যবহারকারী কেবল তার নিজের আপডেট পায়, অন্য কারো নয়।
-- **ইভেন্ট: `bottle-count-updated`** — `POST /api/scan` সফল হওয়ার পর ব্যাকএন্ড থেকে নির্দিষ্ট ব্যবহারকারীর রুমে পাঠানো হয়:
-  ```json
-  { "addedBottles": 10, "bottleCount": 35, "redeemedAt": "2026-06-08T10:15:00.000Z" }
-  ```
-  `user-web`-এর `AuthContext.jsx` এই ইভেন্ট সাবস্ক্রাইব করে এবং `user.bottleCount` স্টেট সাথে সাথে আপডেট করে — ফলে ড্যাশবোর্ডে নতুন কাউন্ট তাৎক্ষণিকভাবে প্রতিফলিত হয়, পেজ রিলোডের প্রয়োজন হয় না।
+- **কানেকশন:** `io(SOCKET_URL, { auth: { token } })` — ইউজার অথবা অ্যাডমিন JWT দিয়ে
+- **রুম:** `user:<userId>` (ইউজার) অথবা `admin` (অ্যাডমিন)
+- **`bottle-count-updated`** — স্ক্যান সফল হলে: `{ addedBottles, bottleCount, earnedPoints, points, redeemedAt, machineName, machineLocation }`
+- **`points-updated`** — পার্টনার অফার রিডিম হলে: `{ points, reason: 'redemption', redemption }`
+- **`machine-capacity-alert`** (শুধু `admin` রুমে) — কোনো মেশিন ৮০%+ ভরে গেলে
 
 ## QR কোড পেলোড ফরম্যাট
 
-QR কোডের ভেতরে এনকোড করা স্ট্রিং একটি JSON অবজেক্ট:
 ```json
 { "type": "bottle-deposit", "token": "1f9c4e3a-7b6d-4f2e-9a1d-0c8b2e5f6a7d" }
 ```
-- `web` (অপারেটর UI) এই পেলোড থেকে QR ইমেজ রেন্ডার করে ক্লায়েন্ট-সাইডে (`qrcode.react`-এর `QRCodeSVG`), অথবা ব্যাকএন্ডের `qrDataUrl` সরাসরি `<img>`-এ দেখায়।
-- `user-web`-এর `ScanPage.jsx` ক্যামেরা দিয়ে QR ডিকোড করার পর JSON পার্স করার চেষ্টা করে; সফল হলে `parsed.token` ব্যবহার করে, ব্যর্থ হলে (অর্থাৎ যদি QR-তে শুধু raw স্ট্রিং থাকে) ডিকোড করা পুরো টেক্সটটিকেই টোকেন হিসেবে ধরে নেয় — এটি ব্যাকওয়ার্ড-কম্প্যাটিবিলিটির জন্য একটি ফলব্যাক।
+`user-web`-এর স্ক্যান পেজ প্রথমে JSON পার্স করার চেষ্টা করে; ব্যর্থ হলে পুরো ডিকোড করা টেক্সটকেই টোকেন হিসেবে ধরে নেয় (raw-token ব্যাকওয়ার্ড-কম্প্যাটিবিলিটি)।
+
+---
+
+## হার্ডওয়্যার প্রোটোটাইপ (RVM মেশিন)
+
+এই সেকশনে আছে: পার্টস লিস্ট, ওয়্যারিং ডায়াগ্রাম, GPIO পিন ম্যাপিং, Raspberry Pi সেটআপ, কিয়স্ক অটো-স্টার্ট, এবং পুরো অপারেশন ফ্লো।
+
+### ওয়্যারিং ডায়াগ্রাম
+
+![Circuit diagram](docs/circuit-diagram.svg)
+
+(SVG ফাইলটি সরাসরি দেখতে: [`docs/circuit-diagram.svg`](docs/circuit-diagram.svg))
+
+### পার্টস লিস্ট
+
+| যন্ত্র | উদাহরণ / নোট |
+| --- | --- |
+| Raspberry Pi | Pi 4 (বা 3B+), Raspberry Pi OS ইনস্টল করা |
+| মনিটর | যেকোনো HDMI মনিটর — কিয়স্ক স্ক্রিন দেখানোর জন্য |
+| Start বাটন | মোমেন্টারি পুশবাটন (normally-open) |
+| Stop বাটন | মোমেন্টারি পুশবাটন (normally-open) |
+| IR সেন্সর | সস্তা IR অবস্টাকল/প্রক্সিমিটি মডিউল (যেমন FC-51, LM393-ভিত্তিক) — বোতল ড্রপ চ্যুটে বসাতে হবে |
+| বাজার (ঐচ্ছিক) | অ্যাক্টিভ বাজার — বোতল গণনা/বাটন চাপার সাউন্ড ফিডব্যাকের জন্য |
+| পুল-ডাউন রেজিস্টর | ২টি ১০kΩ (Start/Stop বাটনের জন্য) |
+| পাওয়ার | Pi-এর জন্য 5V/3A USB-C অ্যাডাপ্টার |
+
+### GPIO পিন ম্যাপিং (BCM নাম্বারিং)
+
+| ফাংশন | BCM GPIO | ফিজিক্যাল হেডার পিন | নোট |
+| --- | --- | --- | --- |
+| Start বাটন | GPIO17 | পিন ১১ | বাটনের এক পা 3V3-তে, অন্য পা GPIO17 + 10kΩ পুল-ডাউন GND-তে |
+| Stop বাটন | GPIO27 | পিন ১৩ | একইভাবে, GPIO27 |
+| IR সেন্সর OUT | GPIO22 | পিন ১৫ | মডিউলের VCC→5V, GND→GND, OUT→GPIO22 |
+| বাজার + (ঐচ্ছিক) | GPIO23 | পিন ১৬ | বাজারের − পা GND-তে |
+
+> সব ভেরিয়েবল `kiosk-gpio-bridge/.env`-এ পরিবর্তনযোগ্য — কোড এডিট করার দরকার নেই।
+
+### Raspberry Pi সেটআপ (ধাপে ধাপে)
+
+1. **Raspberry Pi OS ফ্ল্যাশ করুন** (Raspberry Pi Imager দিয়ে) — Desktop সংস্করণ, কারণ কিয়স্ক স্ক্রিনের জন্য একটি ব্রাউজার লাগবে। প্রথম বুটে Wi-Fi সেটআপ করুন যাতে এটি ব্যাকএন্ড চালু থাকা কম্পিউটারের একই নেটওয়ার্কে যুক্ত হয়।
+2. **Node.js ইনস্টল করুন** (v18+):
+   ```bash
+   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+   ```
+3. **রিপো ক্লোন/কপি করুন** Pi-তে (যেমন `/home/pi/punoshristi`)।
+4. **GPIO bridge সেটআপ:**
+   ```bash
+   cd server/kiosk-gpio-bridge
+   npm install
+   cp .env.example .env   # প্রয়োজনে পিন পরিবর্তন করুন
+   sudo cp kiosk-gpio-bridge.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now kiosk-gpio-bridge
+   systemctl status kiosk-gpio-bridge   # চলছে কিনা যাচাই করুন
+   ```
+5. **কিয়স্ক স্ক্রিন সেটআপ** — `server/web`-এ `.env`-এ ব্যাকএন্ডের লোকাল IP ও এই মেশিনের `VITE_MACHINE_ID` বসান (অ্যাডমিন প্যানেলের Machines পেজ থেকে আইডি নিন), তারপর প্রোডাকশন বিল্ড করে একটি স্ট্যাটিক সার্ভারে সার্ভ করুন:
+   ```bash
+   cd server/web
+   npm install
+   npm run build
+   npm install -g serve
+   serve -s dist -l 5173
+   ```
+6. **Chromium কিয়স্ক মোডে অটো-স্টার্ট** — Pi ডেস্কটপের অটোস্টার্ট ফাইলে (`~/.config/autostart/kiosk.desktop`) যোগ করুন:
+   ```ini
+   [Desktop Entry]
+   Type=Application
+   Name=Punoshristi Kiosk
+   Exec=chromium-browser --kiosk --noerrdialogs --disable-infobars --autoplay-policy=no-user-gesture-required http://localhost:5173
+   X-GNOME-Autostart-enabled=true
+   ```
+   (`--autoplay-policy=no-user-gesture-required` ছাড়া বিজ্ঞাপনের ভিডিও অটো-প্লে নাও হতে পারে।)
+7. Pi রিস্টার্ট করলে GPIO bridge + কিয়স্ক ব্রাউজার দুটোই স্বয়ংক্রিয়ভাবে চালু হয়ে যাবে।
+
+### বিজ্ঞাপন ব্যবস্থাপনা (অ্যাডমিন)
+
+অ্যাডমিন প্যানেলের **"কিয়স্ক বিজ্ঞাপন"** পেজ থেকে:
+- ছবি (jpg/png/webp/gif) অথবা mp4 ভিডিও আপলোড করুন (সর্বোচ্চ ১০০MB)
+- ছবির জন্য দেখানোর সময় (সেকেন্ড) সেট করুন — ভিডিও নিজে শেষ হলেই পরেরটায় যাবে
+- ↑/↓ দিয়ে ক্রম পরিবর্তন করুন, সক্রিয়/নিষ্ক্রিয় টগল করুন, ডিলিট করুন
+- সব কিয়স্ক স্ক্রিন প্রতি লোডে/লুপে `GET /api/ads` থেকে সবশেষ তালিকা টেনে আনে — তাই পরিবর্তন সাথে সাথে সব মেশিনে প্রতিফলিত হয় (কিয়স্ক ট্যাব রিফ্রেশ/রিলোড হলে)
+
+### হার্ডওয়্যার ছাড়া টেস্ট করা
+
+`kiosk-gpio-bridge` কোনো Raspberry Pi না হলে (যেমন Windows/Mac ডেভ মেশিনে) স্বয়ংক্রিয়ভাবে কীবোর্ড-সিমুলেটর মোডে চলে যায় — `npm start` চালিয়ে টার্মিনালে `s`/`x`/`b` + Enter টাইপ করে Start/Stop/বোতল সিমুলেট করা যায়। এছাড়া `web` কিয়স্ক স্ক্রিনেও সবসময় ম্যানুয়াল on-screen বাটন (`+1`, Stop) থাকে, তাই GPIO bridge সম্পূর্ণ বন্ধ থাকলেও (⚪ ম্যানুয়াল মোড দেখাবে) পুরো ফ্লো মাউস/টাচ দিয়ে টেস্ট করা যায়।
+
+### সমস্যা সমাধান (হার্ডওয়্যার)
+
+| সমস্যা | সমাধান |
+| --- | --- |
+| কিয়স্কে "⚪ ম্যানুয়াল মোড" দেখাচ্ছে (Pi-তেও) | `systemctl status kiosk-gpio-bridge` দিয়ে সার্ভিস চলছে কিনা দেখুন; `journalctl -u kiosk-gpio-bridge -f` দিয়ে লগ দেখুন |
+| বোতল গণনা হচ্ছে না / ডাবল কাউন্ট হচ্ছে | `.env`-এ `IR_ACTIVE_LOW` উল্টে দেখুন; `IR_DEBOUNCE_MS` বাড়িয়ে/কমিয়ে টিউন করুন |
+| বাটনে চাপ দিলে কিছু হচ্ছে না | পুল-ডাউন রেজিস্টর ঠিকভাবে লাগানো আছে কিনা, GPIO পিন নাম্বার `.env`-এর সাথে মিলছে কিনা যাচাই করুন |
+| GPIO export এরর (`EACCES`/`EBUSY`) | Pi রিবুট করুন; আগের কোনো bridge প্রসেস এখনো পিন হোল্ড করে আছে কিনা `sudo systemctl status kiosk-gpio-bridge` দিয়ে দেখুন |
+| বিজ্ঞাপনের ভিডিও অটো-প্লে হচ্ছে না | Chromium লঞ্চ কমান্ডে `--autoplay-policy=no-user-gesture-required` আছে কিনা যাচাই করুন |
+
+---
 
 ## প্রযুক্তি স্ট্যাক — বিস্তারিত
 
 ### Backend (`backend/`)
-- **Node.js + Express 4** — HTTP রাউটিং ও মিডলওয়্যার
-- **lowdb 1.x + FileSync adapter** — সাধারণ JSON-ফাইল-ভিত্তিক ডাটাবেজ (`backend/data/db.json`)
-- **jsonwebtoken** — JWT তৈরি ও ভেরিফাই (৩০ দিন মেয়াদ, `expiresIn: '30d'`)
-- **bcryptjs** — পাসওয়ার্ড হ্যাশিং (salt rounds: 10)
-- **qrcode** — সার্ভার-সাইডে QR ইমেজ (base64 PNG data-URL) জেনারেশন
-- **socket.io** — রিয়েল-টাইম, রুম-ভিত্তিক ইভেন্ট পুশিং
-- **uuid** — টোকেন/আইডি জেনারেশন
-- **cors, dotenv** — CORS হ্যান্ডলিং ও এনভায়রনমেন্ট কনফিগ
-- **nodemon** (dev only) — ফাইল পরিবর্তনে অটো-রিস্টার্ট
+Node.js + Express 4, lowdb 1.x (JSON ফাইল ডাটাবেজ), jsonwebtoken, bcryptjs, qrcode, multer (ফাইল আপলোড), socket.io, uuid, cors, dotenv, nodemon (dev)।
 
-### Operator Web — `web/`
-- **React 19 + Vite** — UI ও বিল্ড টুলিং
-- **qrcode.react** (`QRCodeSVG`) — ক্লায়েন্ট-সাইড QR রেন্ডারিং
-- **axios** — API কল
-- সাধারণ স্টেট-মেশিন (`idle → counting → generating → done`) দিয়ে Start/Stop ফ্লো নিয়ন্ত্রিত
+### কিয়স্ক — `web/`
+React 19 + Vite, qrcode.react, socket.io-client (GPIO bridge কানেকশন), সাধারণ স্টেট-মেশিন (`idle → counting → generating → qr`)।
+
+### kiosk-gpio-bridge/
+Node.js, `onoff` (GPIO অ্যাক্সেস — শুধু Linux/Pi-তে কাজ করে), socket.io (লোকাল লুপব্যাক সার্ভার), dotenv। অন্য OS-এ `onoff` require ব্যর্থ হলে স্বয়ংক্রিয়ভাবে কীবোর্ড-সিমুলেটরে fallback করে।
 
 ### User Web — `user-web/`
-- **React 19 + Vite** — UI ও বিল্ড টুলিং; `@vitejs/plugin-basic-ssl` দিয়ে **HTTPS dev server** (ব্রাউজার ক্যামেরা অ্যাক্সেসের জন্য সিকিউর কনটেক্সট আবশ্যক)
-- **react-router-dom v7** — ক্লায়েন্ট-সাইড রাউটিং (`/login`, `/register`, `/dashboard`, `/scan`) + `ProtectedRoute`/`PublicOnlyRoute` গার্ড
-- **html5-qrcode** — ব্রাউজার ক্যামেরা থেকে লাইভ QR স্ক্যানিং (`facingMode: 'environment'` — পেছনের ক্যামেরা ব্যবহার করে)
-- **socket.io-client** — রিয়েল-টাইম `bottle-count-updated` ইভেন্ট গ্রহণ
-- **axios** — API কল, কেন্দ্রীভূত এরর-মেসেজ ম্যাপিং (ইংরেজি সার্ভার এরর → বাংলা ইউজার-ফ্রেন্ডলি বার্তা)
-- **localStorage** — JWT ও ইউজার তথ্য স্থানীয়ভাবে সংরক্ষণ (`bottle-deposit/auth` কী), যাতে অ্যাপ রিলোডের পরও সেশন বজায় থাকে (`AuthContext`-এ `fetchMe()` দিয়ে রিভ্যালিডেশন সহ)
+React 19 + Vite + Tailwind CSS, react-router-dom v7, react-leaflet + Leaflet (OpenStreetMap ট্াইল, কোনো API কী লাগে না), html5-qrcode, socket.io-client, axios।
+
+### Admin — `admin/`
+React 19 + Vite, axios, socket.io-client (রিয়েল-টাইম ক্যাপাসিটি অ্যালার্ট)।
 
 ## ট্রাবলশুটিং
 
 | সমস্যা | সম্ভাব্য কারণ ও সমাধান |
 | --- | --- |
-| ফোন থেকে `user-web` খুললে "সংযোগ করা যাচ্ছে না" দেখায় | (১) ফোন ও কম্পিউটার একই Wi-Fi নেটওয়ার্কে আছে কিনা যাচাই করুন; (২) `user-web/.env`-এ `VITE_API_BASE_URL`/`VITE_SOCKET_URL`-এ `localhost`-এর বদলে কম্পিউটারের লোকাল IP আছে কিনা দেখুন; (৩) `.env` পরিবর্তনের পর Vite ডেভ সার্ভার রিস্টার্ট করেছেন কিনা; (৪) Windows ফায়ারওয়াল পোর্ট `4000`/`5181` ব্লক করছে কিনা |
-| "এই সংযোগটি ব্যক্তিগত নয়" সতর্কতা | এটি স্বাভাবিক — `user-web` সেলফ-সাইনড সার্টিফিকেট দিয়ে HTTPS চালায় (ক্যামেরা অ্যাক্সেসের জন্য আবশ্যক)। **Advanced → Proceed** চেপে এগিয়ে যান, এটি একবারই করতে হয় |
-| ক্যামেরা চালু হচ্ছে না / পারমিশন এরর | ব্রাউজারের সাইট-সেটিংসে ক্যামেরা পারমিশন দিয়েছেন কিনা যাচাই করুন; নিশ্চিত করুন পেজটি HTTPS দিয়ে লোড হয়েছে (`http://` দিয়ে ক্যামেরা কাজ করবে না) |
-| QR স্ক্যান করলে "QR code not recognized" | QR কোডটি এই সিস্টেমেরই কিনা এবং ব্যাকএন্ড একই `db.json` ব্যবহার করছে কিনা যাচাই করুন (multiple backend instance চালু থাকলে টোকেন ভিন্ন ফাইলে যেতে পারে) |
-| QR স্ক্যান করলে "এই QR কোড ইতিমধ্যে ব্যবহার করা হয়েছে" | প্রতিটি QR কোড একবারই ব্যবহারযোগ্য — অপারেটর UI-তে নতুন গণনা শুরু করে নতুন QR জেনারেট করুন |
-| লগইন/রেজিস্টারে "সার্ভারের সাথে সংযোগ করা যাচ্ছে না" | ব্যাকএন্ড (`backend`) চালু আছে কিনা এবং `http://<IP>:4000/api/health` থেকে `{ status: 'ok' }` পাওয়া যাচ্ছে কিনা যাচাই করুন |
-| ডাটা মুছে গেছে / নতুন শুরু করতে চান | ব্যাকএন্ড বন্ধ করে `backend/data/db.json` মুছে ফেলুন — পরের বার চালু হলে খালি ডিফল্ট স্ট্রাকচার (`{ users: [], sessions: [] }`) দিয়ে নতুন ফাইল তৈরি হবে |
+| ফোন থেকে `user-web` খুললে সংযোগ হয় না | ফোন/কম্পিউটার একই Wi-Fi-তে আছে কিনা, `.env`-এ `localhost` এর বদলে লোকাল IP আছে কিনা, `.env` পরিবর্তনের পর dev সার্ভার রিস্টার্ট করেছেন কিনা, ফায়ারওয়াল পোর্ট ব্লক করছে কিনা যাচাই করুন |
+| "এই সংযোগটি ব্যক্তিগত নয়" সতর্কতা | স্বাভাবিক — সেলফ-সাইনড HTTPS সার্টিফিকেট। Advanced → Proceed |
+| ক্যামেরা চালু হচ্ছে না | সাইট-পারমিশনে ক্যামেরা অনুমতি দিয়েছেন কিনা, HTTPS দিয়ে লোড হয়েছে কিনা যাচাই করুন |
+| "QR code not recognized" | ব্যাকএন্ড একই `db.json` ব্যবহার করছে কিনা (একাধিক ইনস্ট্যান্স চালু থাকলে টোকেন ভিন্ন ফাইলে যেতে পারে) |
+| OTP কোড পাচ্ছি না | কোনো SMS গেটওয়ে কনফিগার করা নেই — কোড ব্যাকএন্ড কনসোলে ও (dev মোডে) `/auth/otp/send` রেসপন্সে `devCode` হিসেবে পাওয়া যায় |
+| বিজ্ঞাপন আপলোড ব্যর্থ | ফাইল টাইপ (jpg/png/webp/gif/mp4) ও সাইজ (< 100MB) যাচাই করুন |
+| ডাটা মুছে নতুন শুরু করতে চাই | ব্যাকএন্ড বন্ধ করে `backend/data/db.json` মুছুন (আবার চালু হলে খালি স্ট্রাকচার তৈরি হবে); দরকার হলে `npm run seed` দিয়ে ডেমো ডাটা ফিরিয়ে আনুন |
 
 ## নিরাপত্তা সংক্রান্ত নোট
 
-এই প্রজেক্টটি **লোকাল-নেটওয়ার্ক / ডেভেলপমেন্ট ব্যবহারের জন্য** ডিজাইন করা হয়েছে। প্রোডাকশনে নেওয়ার আগে নিচের বিষয়গুলো বিবেচনা করুন:
+এই প্রজেক্ট **লোকাল-নেটওয়ার্ক / প্রোটোটাইপ ব্যবহারের জন্য** ডিজাইন করা। প্রোডাকশনে নেওয়ার আগে:
 
-- `backend/.env`-এর `JWT_SECRET` একটি দীর্ঘ, র‍্যান্ডম, গোপন মান দিয়ে পরিবর্তন করুন (বর্তমান ডিফল্ট শুধুই লোকাল ডেভ-এর জন্য)।
-- `cors({ origin: '*' })` ও Socket.IO-র `cors: { origin: '*' }` — প্রোডাকশনে নির্দিষ্ট origin-এ সীমাবদ্ধ করা উচিত।
-- সেলফ-সাইনড HTTPS সার্টিফিকেট শুধু লোকাল টেস্টিংয়ের জন্য উপযুক্ত; পাবলিক ডিপ্লয়মেন্টে একটি বৈধ CA-সাইনড সার্টিফিকেট ব্যবহার করুন।
-- `lowdb` + একক JSON ফাইল কনকারেন্ট রাইট-হেভি লোডের জন্য উপযুক্ত নয় — বড় পরিসরে প্রকৃত ডাটাবেজে (PostgreSQL/MongoDB ইত্যাদি) মাইগ্রেট করার পরামর্শ দেওয়া হচ্ছে।
-- পাসওয়ার্ড bcrypt দিয়ে হ্যাশ করে সংরক্ষিত হয় (raw পাসওয়ার্ড কখনো সংরক্ষিত/লগ করা হয় না) — এই অভ্যাস বজায় রাখুন।
+- `JWT_SECRET`, `ADMIN_JWT_SECRET`, `ADMIN_PASSWORD` — দীর্ঘ, র‍্যান্ডম, গোপন মান দিয়ে পরিবর্তন করুন
+- `cors({ origin: '*' })` ও Socket.IO CORS — নির্দিষ্ট origin-এ সীমাবদ্ধ করুন
+- সেলফ-সাইনড HTTPS শুধু লোকাল টেস্টিংয়ের জন্য — পাবলিক ডিপ্লয়মেন্টে বৈধ CA সার্টিফিকেট লাগবে
+- `kiosk-gpio-bridge` ইচ্ছাকৃতভাবে `127.0.0.1`-এ বাইন্ড করা (loopback-only) — GPIO নিয়ন্ত্রণ কখনো নেটওয়ার্কের মাধ্যমে অ্যাক্সেসযোগ্য করবেন না
+- বিজ্ঞাপন আপলোডে ফাইল টাইপ/সাইজ ভ্যালিডেশন আছে (multer `fileFilter` + `limits`) — এটি সরাবেন না
+- ফোন OTP এখন শুধু কনসোলে লগ হয় (dev-এ রেসপন্সেও) — বাস্তব ব্যবহারের আগে একটি প্রকৃত SMS গেটওয়ে (Twilio বা BD-ভিত্তিক প্রোভাইডার) বসান এবং `devCode` ফিল্ড সরিয়ে দিন
+- `lowdb` + একক JSON ফাইল কনকারেন্ট রাইট-হেভি লোডের জন্য উপযুক্ত নয় — বড় পরিসরে PostgreSQL/MongoDB-এ মাইগ্রেট করুন
+- পাসওয়ার্ড bcrypt দিয়ে হ্যাশ করে সংরক্ষিত হয় — এই অভ্যাস বজায় রাখুন
 
 ## ভবিষ্যতে উন্নয়নের সম্ভাবনা
 
-- প্রকৃত ডাটাবেজে মাইগ্রেশন (lowdb থেকে PostgreSQL/MongoDB)
-- QR সেশনের জন্য মেয়াদ-উত্তীর্ণ হওয়ার (expiry/TTL) ব্যবস্থা যোগ করা
-- অপারেটর UI-তে অথেনটিকেশন/অ্যাক্সেস-কন্ট্রোল যোগ করা (বর্তমানে `POST /api/sessions` ওপেন)
-- ব্যবহারকারীর বোতল-জমার ইতিহাস/লেনদেন-লগ দেখানোর ফিচার
-- প্রোডাকশন ডিপ্লয়মেন্ট গাইড (HTTPS রিভার্স প্রক্সি, প্রসেস ম্যানেজার, ইত্যাদি)
+- প্রকৃত SMS/ইমেইল গেটওয়ে দিয়ে OTP ডেলিভারি (nodemailer ইতিমধ্যে ডিপেন্ডেন্সিতে আছে কিন্তু ব্যবহৃত হচ্ছে না)
+- প্রকৃত ডাটাবেজে মাইগ্রেশন (lowdb → PostgreSQL/MongoDB)
+- QR সেশনের জন্য মেয়াদ-উত্তীর্ণ হওয়ার (expiry/TTL) ব্যবস্থা
+- একাধিক Raspberry Pi কিয়স্ক একসাথে মনিটর করার জন্য অ্যাডমিন প্যানেলে একটি "Live Kiosks" ভিউ
+- হার্ডওয়্যারে একটি সোলেনয়েড/ট্র্যাপডোর যোগ করে ভুল বস্তু (non-PET) প্রত্যাখ্যান করার সক্ষমতা
+- প্রোডাকশন ডিপ্লয়মেন্ট গাইড (HTTPS রিভার্স প্রক্সি, প্রসেস ম্যানেজার)

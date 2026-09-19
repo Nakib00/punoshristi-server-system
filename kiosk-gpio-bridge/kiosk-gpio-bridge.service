@@ -1,0 +1,25 @@
+; systemd unit for the GPIO bridge — copy to /etc/systemd/system/ on the Pi.
+;
+; Install steps (run on the Raspberry Pi):
+;   sudo cp kiosk-gpio-bridge.service /etc/systemd/system/
+;   sudo systemctl daemon-reload
+;   sudo systemctl enable --now kiosk-gpio-bridge
+;   sudo systemctl status kiosk-gpio-bridge   # verify it's running
+;   journalctl -u kiosk-gpio-bridge -f        # live logs
+;
+; Adjust WorkingDirectory/User below if you cloned the repo somewhere other
+; than /home/pi/punoshristi or run as a different user.
+[Unit]
+Description=Punoshristi Kiosk GPIO Bridge
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/punoshristi/server/kiosk-gpio-bridge
+ExecStart=/usr/bin/node src/index.js
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

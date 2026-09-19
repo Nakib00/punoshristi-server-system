@@ -1,83 +1,206 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { fetchScanHistory } from '../api';
+import { fetchMachines, fetchMyActivity, fetchMyStats, fetchPartners } from '../api';
+import { haversineKm } from '../lib/geo';
+import TopAppBar from '../components/TopAppBar';
+import BottomNav from '../components/BottomNav';
+import Icon from '../components/Icon';
 
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleString('bn-BD', {
-    day: 'numeric', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
+const ACTIVITY_ICON = { recycle: 'eco', redemption: 'payments' };
+
+function timeAgo(iso) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Today, ${new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return `Yesterday, ${new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+  return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 }
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [scans, setScans] = useState([]);
-  const [loadingScans, setLoadingScans] = useState(true);
+  const [stats, setStats] = useState(null);
+  const [activity, setActivity] = useState([]);
+  const [machines, setMachines] = useState([]);
+  const [partners, setPartners] = useState([]);
+  const [coords, setCoords] = useState(null);
 
   useEffect(() => {
-    fetchScanHistory()
-      .then(({ scans: list }) => setScans(list || []))
-      .catch(() => {})
-      .finally(() => setLoadingScans(false));
+    fetchMyStats().then(setStats).catch(() => {});
+    fetchMyActivity(3).then(({ activity: a }) => setActivity(a || [])).catch(() => {});
+    fetchMachines().then(({ machines: m }) => setMachines(m || [])).catch(() => {});
+    fetchPartners().then(({ partners: p }) => setPartners(p || [])).catch(() => {});
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
+        { timeout: 5000 }
+      );
+    }
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
+  const nearest = (() => {
+    if (machines.length === 0) return null;
+    if (!coords) return machines[0];
+    return machines
+      .map((m) => ({ ...m, distanceKm: haversineKm(coords.lat, coords.lng, m.lat, m.lng) }))
+      .sort((a, b) => a.distanceKm - b.distanceKm)[0];
+  })();
+
+  const featuredPartners = partners.slice(0, 3);
+  const firstName = user?.name?.split(' ')[0] || user?.name;
 
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <div>
-          <p className="greeting">স্বাগতম,</p>
-          <h1>{user?.name}</h1>
-          {user?.phone && <p className="user-phone">📞 {user.phone}</p>}
-        </div>
-        <button className="btn-ghost" onClick={handleLogout}>লগআউট</button>
-      </div>
+    <div className="min-h-screen bg-[#F0FAF2] pb-24">
+      <TopAppBar />
+      <main className="pt-20 px-margin-mobile space-y-lg">
+        <section>
+          <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Good day, {firstName} 👋</h1>
+          <p className="font-body-md text-body-md text-on-surface-variant">Every bottle counts towards a greener planet.</p>
+        </section>
 
-      <div className="count-card">
-        <p className="count-label">আপনার মোট বোতল সংখ্যা</p>
-        <p className="count-value">{user?.bottleCount ?? 0}</p>
-      </div>
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#004317] to-[#1a5c2a] rounded-xl p-lg text-white shadow-lg">
+          <div className="relative z-10 flex flex-col gap-md">
+            <div>
+              <span className="font-label-md text-label-md opacity-80">Total Eco-Balance</span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-headline-xl text-headline-xl">{(stats?.points ?? user?.points ?? 0).toLocaleString()}</span>
+                <span className="font-title-md text-title-md">Points</span>
+              </div>
+              <span className="font-body-md text-body-md opacity-90">
+                ≈ {Math.round((stats?.points ?? user?.points ?? 0) / 10)} BDT
+              </span>
+            </div>
+            <div className="flex gap-sm flex-wrap">
+              <div className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2">
+                <Icon name="recycling" size="18px" />
+                <span className="font-label-md text-label-md">{stats?.bottleCount ?? user?.bottleCount ?? 0} Bottles</span>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2">
+                <Icon name="military_tech" size="18px" />
+                <span className="font-label-md text-label-md">Rank #{stats?.rank ?? '—'}</span>
+              </div>
+            </div>
+          </div>
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-primary-container/20 rounded-full blur-3xl" />
+        </section>
 
-      <button className="btn-primary btn-scan" onClick={() => navigate('/scan')}>
-        📷 QR কোড স্ক্যান করুন
-      </button>
+        <section className="grid grid-cols-4 gap-sm">
+          {[
+            { icon: 'qr_code_scanner', label: 'Scan QR', to: '/scan', accent: true },
+            { icon: 'map', label: 'Find RVM', to: '/map' },
+            { icon: 'redeem', label: 'Redeem', to: '/partners' },
+            { icon: 'leaderboard', label: 'Ranks', to: '/leaderboard' },
+          ].map((action) => (
+            <button key={action.label} className="flex flex-col items-center gap-xs" onClick={() => navigate(action.to)}>
+              <div
+                className={
+                  'w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm hover:opacity-80 transition-opacity ' +
+                  (action.accent ? 'bg-secondary-container text-on-secondary-container' : 'bg-white text-primary')
+                }
+              >
+                <Icon name={action.icon} />
+              </div>
+              <span className="font-label-md text-label-md text-on-surface">{action.label}</span>
+            </button>
+          ))}
+        </section>
 
-      <p className="hint">
-        মেশিনে বোতল জমা দেওয়ার পর স্ক্রিনে যে QR কোড দেখানো হবে, সেটি স্ক্যান করলে সাথে সাথে আপনার অ্যাকাউন্টে বোতলের সংখ্যা যোগ হয়ে যাবে।
-      </p>
-
-      {/* Scan history */}
-      <div className="history-section">
-        <h2 className="history-title">জমার ইতিহাস</h2>
-        {loadingScans ? (
-          <p className="history-empty">লোড হচ্ছে...</p>
-        ) : scans.length === 0 ? (
-          <p className="history-empty">এখনো কোনো বোতল জমা দেওয়া হয়নি।</p>
-        ) : (
-          <ul className="history-list">
-            {scans.map((scan) => (
-              <li key={scan.id} className="history-item">
-                <div className="history-item-main">
-                  <span className="history-bottles">+{scan.bottleCount} 🍾</span>
-                  <span className="history-date">{formatDate(scan.createdAt)}</span>
+        {nearest && (
+          <section className="space-y-md">
+            <div className="flex justify-between items-center">
+              <h2 className="font-title-md text-title-md text-on-surface">Nearby Machine</h2>
+              <button className="font-label-md text-label-md text-secondary" onClick={() => navigate('/map')}>
+                View All
+              </button>
+            </div>
+            <div className="bg-white rounded-xl overflow-hidden shadow-sm flex p-md gap-md items-center">
+              <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-primary/10 flex items-center justify-center">
+                <Icon name="recycling" className="text-primary" size="32px" />
+              </div>
+              <div className="flex-grow flex flex-col gap-xs min-w-0">
+                <h3 className="font-title-md text-title-md text-on-surface leading-tight truncate">{nearest.name}</h3>
+                <div className="flex items-center gap-1 text-on-surface-variant">
+                  <Icon name="near_me" size="16px" />
+                  <span className="font-body-md text-body-md">
+                    {nearest.distanceKm != null ? `${nearest.distanceKm.toFixed(1)} km away` : nearest.location}
+                  </span>
                 </div>
-                {scan.machineName && (
-                  <div className="history-machine">
-                    📍 {scan.machineName} — {scan.machineLocation}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+                <div className="mt-1">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-md text-[10px]">
+                    ACTIVE &amp; READY
+                  </span>
+                </div>
+              </div>
+              <button
+                className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white shadow-md shrink-0"
+                onClick={() =>
+                  window.open(`https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lng}`, '_blank')
+                }
+              >
+                <Icon name="directions" />
+              </button>
+            </div>
+          </section>
         )}
-      </div>
+
+        <section className="space-y-md">
+          <h2 className="font-title-md text-title-md text-on-surface">Recent Activity</h2>
+          {activity.length === 0 ? (
+            <p className="font-body-md text-body-md text-on-surface-variant">No activity yet — go recycle a bottle!</p>
+          ) : (
+            <div className="space-y-sm">
+              {activity.map((a) => (
+                <div key={a.id} className="bg-[#F0FAF2] border border-[#E0F2E4] rounded-xl p-md flex justify-between items-center">
+                  <div className="flex items-center gap-md min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shrink-0">
+                      <Icon name={ACTIVITY_ICON[a.type] || 'eco'} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-label-md text-label-md text-on-surface truncate">{a.title}</p>
+                      <p className="text-[11px] text-on-surface-variant">{timeAgo(a.createdAt)}</p>
+                    </div>
+                  </div>
+                  <span className={`font-title-md text-title-md shrink-0 ${a.pointsDelta >= 0 ? 'text-secondary' : 'text-error'}`}>
+                    {a.pointsDelta >= 0 ? '+' : ''}
+                    {a.pointsDelta} pts
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {featuredPartners.length > 0 && (
+          <section className="space-y-md">
+            <h2 className="font-title-md text-title-md text-on-surface">Exclusive Offers</h2>
+            <div className="flex overflow-x-auto gap-md pb-4 hide-scrollbar">
+              {featuredPartners.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => navigate(`/partners/${p.id}`)}
+                  className="flex-shrink-0 w-64 h-32 rounded-xl relative overflow-hidden bg-gradient-to-br from-primary to-secondary p-md flex flex-col justify-end text-left"
+                >
+                  <span className="bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold px-2 py-0.5 rounded-full w-fit mb-1">
+                    {p.category.toUpperCase()}
+                  </span>
+                  <h4 className="text-white font-title-md text-title-md leading-tight">{p.name}</h4>
+                  <p className="text-white/80 font-label-md text-[10px]">
+                    From {p.cheapestOfferCost ?? '—'} Points
+                  </p>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+      <BottomNav />
     </div>
   );
 }

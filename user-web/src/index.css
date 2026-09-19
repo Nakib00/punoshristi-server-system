@@ -1,16 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
+}
+
+html {
+  color-scheme: light;
 }
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
-  background: linear-gradient(180deg, #eaf7ef 0%, #ffffff 60%);
-  color: #1f2a24;
+  min-height: max(884px, 100dvh);
+  background-color: #fcf9f8;
 }
 
 button {
@@ -20,4 +29,60 @@ button {
 
 input {
   font-family: inherit;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes loading-progress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+.animate-loading {
+  animation: loading-progress 2.2s ease-in-out forwards;
+}
+
+@keyframes scan-line {
+  0%,
+  100% {
+    top: 0%;
+  }
+  50% {
+    top: 100%;
+  }
+}
+.scanner-line {
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+/* react-leaflet default marker icon fix (we render custom divIcons instead,
+   but keep the base CSS import so tiles/attribution render correctly). */
+.leaflet-container {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #f0eded;
 }

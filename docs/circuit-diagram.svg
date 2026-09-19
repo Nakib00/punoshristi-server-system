@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="1000" height="700" fill="#fcf9f8"/>
+  <text x="500" y="34" text-anchor="middle" font-size="22" font-weight="700" fill="#004317">Punoshristi RVM Prototype — Wiring Diagram</text>
+  <text x="500" y="56" text-anchor="middle" font-size="13" fill="#40493f">Raspberry Pi 4 · BCM (GPIO.BOARD is NOT used) pin numbering</text>
+
+  <!-- Raspberry Pi board -->
+  <g>
+    <rect x="60" y="110" width="260" height="420" rx="14" fill="#1a5c2a" stroke="#004317" stroke-width="2"/>
+    <text x="190" y="140" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">Raspberry Pi 4</text>
+    <text x="190" y="160" text-anchor="middle" font-size="11" fill="#c9f0cf">Raspberry Pi OS + Chromium kiosk</text>
+
+    <!-- USB-C power -->
+    <rect x="80" y="480" width="70" height="26" rx="4" fill="#eaf7ef" stroke="#004317"/>
+    <text x="115" y="497" text-anchor="middle" font-size="10" fill="#004317">USB-C 5V/3A</text>
+
+    <!-- HDMI -->
+    <rect x="230" y="480" width="70" height="26" rx="4" fill="#eaf7ef" stroke="#004317"/>
+    <text x="265" y="497" text-anchor="middle" font-size="10" fill="#004317">HDMI</text>
+
+    <!-- GPIO header block -->
+    <rect x="255" y="185" width="20" height="270" fill="#0c5221" stroke="#8fd394"/>
+    <!-- pin labels (BCM) -->
+    <g font-size="11" fill="#1c1b1b">
+      <text x="330" y="200">5V  &#8592; IR sensor VCC</text>
+      <line x1="275" y1="196" x2="320" y2="196" stroke="#f2c94c" stroke-width="2"/>
+
+      <text x="330" y="230">GND &#8592; common ground rail</text>
+      <line x1="275" y1="226" x2="320" y2="226" stroke="#333333" stroke-width="2"/>
+
+      <text x="330" y="260">GPIO17 (pin 11) &#8592; Start button</text>
+      <line x1="275" y1="256" x2="320" y2="256" stroke="#56ccf2" stroke-width="2"/>
+
+      <text x="330" y="290">GPIO27 (pin 13) &#8592; Stop button</text>
+      <line x1="275" y1="286" x2="320" y2="286" stroke="#eb5757" stroke-width="2"/>
+
+      <text x="330" y="320">GPIO22 (pin 15) &#8592; IR sensor OUT</text>
+      <line x1="275" y1="316" x2="320" y2="316" stroke="#9b51e0" stroke-width="2"/>
+
+      <text x="330" y="350">GPIO23 (pin 16) &#8592; Buzzer + (optional)</text>
+      <line x1="275" y1="346" x2="320" y2="346" stroke="#f2994a" stroke-width="2"/>
+
+      <text x="330" y="380">3V3 (pin 1) &#8594; button pull-up rail</text>
+      <line x1="275" y1="376" x2="320" y2="376" stroke="#f2c94c" stroke-width="2" stroke-dasharray="4 3"/>
+    </g>
+  </g>
+
+  <!-- Start Button -->
+  <g>
+    <rect x="620" y="150" width="180" height="90" rx="10" fill="#ffffff" stroke="#56ccf2" stroke-width="2"/>
+    <text x="710" y="178" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">START Button</text>
+    <text x="710" y="196" text-anchor="middle" font-size="10" fill="#40493f">Momentary, normally-open</text>
+    <text x="710" y="212" text-anchor="middle" font-size="10" fill="#40493f">Leg A &#8594; GPIO17 · Leg B &#8594; 3V3</text>
+    <text x="710" y="228" text-anchor="middle" font-size="10" fill="#40493f">10k&#937; pull-down: GPIO17 &#8594; GND</text>
+  </g>
+
+  <!-- Stop Button -->
+  <g>
+    <rect x="620" y="260" width="180" height="90" rx="10" fill="#ffffff" stroke="#eb5757" stroke-width="2"/>
+    <text x="710" y="288" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">STOP Button</text>
+    <text x="710" y="306" text-anchor="middle" font-size="10" fill="#40493f">Momentary, normally-open</text>
+    <text x="710" y="322" text-anchor="middle" font-size="10" fill="#40493f">Leg A &#8594; GPIO27 · Leg B &#8594; 3V3</text>
+    <text x="710" y="338" text-anchor="middle" font-size="10" fill="#40493f">10k&#937; pull-down: GPIO27 &#8594; GND</text>
+  </g>
+
+  <!-- IR sensor -->
+  <g>
+    <rect x="620" y="370" width="180" height="100" rx="10" fill="#ffffff" stroke="#9b51e0" stroke-width="2"/>
+    <text x="710" y="396" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">IR Obstacle Sensor</text>
+    <text x="710" y="412" text-anchor="middle" font-size="10" fill="#40493f">(e.g. FC-51 / LM393 module)</text>
+    <text x="710" y="430" text-anchor="middle" font-size="10" fill="#40493f">VCC &#8594; 5V · GND &#8594; GND</text>
+    <text x="710" y="446" text-anchor="middle" font-size="10" fill="#40493f">OUT &#8594; GPIO22</text>
+    <text x="710" y="462" text-anchor="middle" font-size="10" fill="#40493f">Aim across the bottle drop chute</text>
+  </g>
+
+  <!-- Buzzer -->
+  <g>
+    <rect x="620" y="490" width="180" height="70" rx="10" fill="#ffffff" stroke="#f2994a" stroke-width="2"/>
+    <text x="710" y="514" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">Buzzer (optional)</text>
+    <text x="710" y="532" text-anchor="middle" font-size="10" fill="#40493f">+ &#8594; GPIO23 · &#8722; &#8594; GND</text>
+    <text x="710" y="548" text-anchor="middle" font-size="10" fill="#40493f">Beep feedback on button/bottle</text>
+  </g>
+
+  <!-- Monitor -->
+  <g>
+    <rect x="380" y="490" width="180" height="90" rx="10" fill="#ffffff" stroke="#004317" stroke-width="2"/>
+    <text x="470" y="518" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">HDMI Monitor</text>
+    <text x="470" y="536" text-anchor="middle" font-size="10" fill="#40493f">Runs Chromium in --kiosk mode</text>
+    <text x="470" y="552" text-anchor="middle" font-size="10" fill="#40493f">pointed at the kiosk web app</text>
+  </g>
+
+  <!-- connecting lines -->
+  <line x1="320" y1="196" x2="620" y2="400" stroke="#f2c94c" stroke-width="2"/>
+  <line x1="320" y1="256" x2="620" y2="195" stroke="#56ccf2" stroke-width="2"/>
+  <line x1="320" y1="286" x2="620" y2="305" stroke="#eb5757" stroke-width="2"/>
+  <line x1="320" y1="316" x2="620" y2="420" stroke="#9b51e0" stroke-width="2"/>
+  <line x1="320" y1="346" x2="620" y2="525" stroke="#f2994a" stroke-width="2"/>
+  <line x1="320" y1="226" x2="620" y2="440" stroke="#333333" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <line x1="300" y1="493" x2="380" y2="530" stroke="#004317" stroke-width="2"/>
+
+  <!-- legend -->
+  <g font-size="11" fill="#40493f">
+    <text x="60" y="600" font-weight="700" fill="#004317">Legend</text>
+    <line x1="60" y1="612" x2="90" y2="612" stroke="#56ccf2" stroke-width="3"/><text x="96" y="616">Start signal</text>
+    <line x1="60" y1="628" x2="90" y2="628" stroke="#eb5757" stroke-width="3"/><text x="96" y="632">Stop signal</text>
+    <line x1="60" y1="644" x2="90" y2="644" stroke="#9b51e0" stroke-width="3"/><text x="96" y="648">IR sensor signal</text>
+    <line x1="220" y1="612" x2="250" y2="612" stroke="#f2994a" stroke-width="3"/><text x="256" y="616">Buzzer (optional)</text>
+    <line x1="220" y1="628" x2="250" y2="628" stroke="#f2c94c" stroke-width="3"/><text x="256" y="632">5V / 3V3 power</text>
+    <line x1="220" y1="644" x2="250" y2="644" stroke="#333333" stroke-width="2" stroke-dasharray="3 3"/><text x="256" y="648">Ground</text>
+  </g>
+
+  <text x="500" y="680" text-anchor="middle" font-size="11" fill="#717a6f">
+    Full pin table, part list and step-by-step assembly notes: server/README.md § Hardware (RVM prototype)
+  </text>
+</svg>

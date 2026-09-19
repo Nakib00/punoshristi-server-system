@@ -1,0 +1,15 @@
+{
+  "name": "kiosk-gpio-bridge",
+  "version": "1.0.0",
+  "description": "Reads the Punoshristi RVM's physical Start/Stop buttons and IR bottle sensor, and pushes events to the on-machine kiosk web app over a local WebSocket.",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "onoff": "^6.0.3",
+    "socket.io": "^4.7.5"
+  }
+}

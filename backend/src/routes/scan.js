@@ -2,6 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { pointsForBottles } = require('../lib/points');
 
 const CAPACITY_ALERT_THRESHOLD = 0.8; // 80%
 
@@ -57,9 +58,11 @@ module.exports = function createScanRouter(io) {
     // Mark session as used
     sessions.find({ token }).assign({ used: true, redeemedBy: user.id, redeemedAt }).write();
 
-    // Update user bottle count
+    // Update user bottle count + award Eco-Points
     const newCount = (user.bottleCount || 0) + session.bottleCount;
-    usersCollection.find({ id: user.id }).assign({ bottleCount: newCount }).write();
+    const earnedPoints = pointsForBottles(session.bottleCount);
+    const newPoints = (user.points || 0) + earnedPoints;
+    usersCollection.find({ id: user.id }).assign({ bottleCount: newCount, points: newPoints }).write();
 
     // Record scan history
     const scan = {
@@ -72,6 +75,7 @@ module.exports = function createScanRouter(io) {
       machineLocation: session.machineLocation || null,
       sessionId: session.id,
       bottleCount: session.bottleCount,
+      pointsEarned: earnedPoints,
       createdAt: redeemedAt,
     };
     db.get('scans').push(scan).write();
@@ -108,6 +112,8 @@ module.exports = function createScanRouter(io) {
     const payload = {
       addedBottles: session.bottleCount,
       bottleCount: newCount,
+      earnedPoints,
+      points: newPoints,
       redeemedAt,
       machineName: session.machineName || null,
       machineLocation: session.machineLocation || null,
