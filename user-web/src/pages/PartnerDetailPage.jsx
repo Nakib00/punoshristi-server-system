@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { fetchPartner, redeemOffer } from '../api';
 import { useAuth } from '../AuthContext';
 import Icon from '../components/Icon';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const OFFER_COLORS = ['bg-primary', 'bg-secondary', 'bg-tertiary-container'];
 
@@ -10,6 +11,7 @@ export default function PartnerDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, updateUser } = useAuth();
+  const { t } = useLanguage();
   const [partner, setPartner] = useState(null);
   const [redeeming, setRedeeming] = useState(null);
   const [message, setMessage] = useState('');
@@ -29,9 +31,9 @@ export default function PartnerDetailPage() {
     try {
       const { points } = await redeemOffer(id, offer.id);
       updateUser({ points });
-      setMessage(`Redeemed: ${offer.title}! Show this screen to staff to claim it.`);
+      setMessage(t('partnerDetail.redeemedMessage', { title: offer.title }));
     } catch (err) {
-      setMessage(err?.response?.data?.message || 'Could not redeem this offer.');
+      setMessage(err?.response?.data?.message || t('partnerDetail.errRedeem'));
     } finally {
       setRedeeming(null);
     }
@@ -85,11 +87,11 @@ export default function PartnerDetailPage() {
         <div className="bg-secondary-container/30 border border-secondary-container p-md rounded-xl flex items-center justify-between">
           <div className="flex items-center gap-sm">
             <Icon name="account_balance_wallet" className="text-on-secondary-container" />
-            <span className="font-title-md text-title-md text-on-secondary-container">Your Balance</span>
+            <span className="font-title-md text-title-md text-on-secondary-container">{t('partnerDetail.yourBalance')}</span>
           </div>
           <div className="flex items-center gap-xs">
             <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary">{user?.points ?? 0}</span>
-            <span className="font-label-md text-label-md text-on-surface-variant">pts</span>
+            <span className="font-label-md text-label-md text-on-surface-variant">{t('partnerDetail.points')}</span>
           </div>
         </div>
       </div>
@@ -102,7 +104,7 @@ export default function PartnerDetailPage() {
 
       <div className="mt-xl px-margin-mobile">
         <div className="flex items-center justify-between mb-md">
-          <h2 className="font-title-md text-title-md text-on-background">Available Offers</h2>
+          <h2 className="font-title-md text-title-md text-on-background">{t('partnerDetail.availableOffers')}</h2>
         </div>
         <div className="space-y-sm">
           {(partner.offers || []).map((offer, i) => (
@@ -113,7 +115,9 @@ export default function PartnerDetailPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="font-title-md text-title-md text-on-surface truncate">{offer.title}</p>
-                  <p className="font-body-md text-body-md text-on-surface-variant">{offer.pointsCost} Points</p>
+                  <p className="font-body-md text-body-md text-on-surface-variant">
+                    {offer.pointsCost} {t('partnerDetail.points')}
+                  </p>
                 </div>
               </div>
               <button
@@ -121,19 +125,19 @@ export default function PartnerDetailPage() {
                 disabled={redeeming === offer.id || (user?.points ?? 0) < offer.pointsCost}
                 className="bg-primary text-white font-label-md text-label-md px-md py-2 rounded-full active:scale-95 transition-transform disabled:opacity-40 shrink-0"
               >
-                {redeeming === offer.id ? '...' : 'Redeem'}
+                {redeeming === offer.id ? '...' : t('partnerDetail.redeem')}
               </button>
             </div>
           ))}
           {(partner.offers || []).length === 0 && (
-            <p className="font-body-md text-body-md text-on-surface-variant">No offers available right now.</p>
+            <p className="font-body-md text-body-md text-on-surface-variant">{t('partnerDetail.noOffers')}</p>
           )}
         </div>
       </div>
 
       {partner.address && (
         <div className="mt-xl px-margin-mobile pb-8">
-          <h2 className="font-title-md text-title-md text-on-background mb-md">Location</h2>
+          <h2 className="font-title-md text-title-md text-on-background mb-md">{t('partnerDetail.location')}</h2>
           <div className="flex items-start gap-sm">
             <Icon name="location_on" className="text-on-surface-variant" />
             <div>

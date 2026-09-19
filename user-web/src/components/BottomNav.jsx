@@ -1,15 +1,17 @@
 import { NavLink } from 'react-router-dom';
 import Icon from './Icon';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const TABS = [
-  { to: '/dashboard', icon: 'home', label: 'Home' },
-  { to: '/map', icon: 'map', label: 'Map' },
-  { to: '/scan', icon: 'qr_code_scanner', label: 'Scan' },
-  { to: '/leaderboard', icon: 'leaderboard', label: 'Ranks' },
-  { to: '/profile', icon: 'person', label: 'Profile' },
+  { to: '/dashboard', icon: 'home', key: 'nav.home' },
+  { to: '/map', icon: 'map', key: 'nav.map' },
+  { to: '/scan', icon: 'qr_code_scanner', key: 'nav.scan' },
+  { to: '/leaderboard', icon: 'leaderboard', key: 'nav.ranks' },
+  { to: '/profile', icon: 'person', key: 'nav.profile' },
 ];
 
 export default function BottomNav() {
+  const { t } = useLanguage();
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center px-4 py-2 bg-surface shadow-[0px_-4px_12px_rgba(0,67,23,0.04)] rounded-t-xl">
       {TABS.map((tab) => (
@@ -26,7 +28,7 @@ export default function BottomNav() {
           {({ isActive }) => (
             <>
               <Icon name={tab.icon} filled={isActive} />
-              <span className="font-label-md text-label-md">{tab.label}</span>
+              <span className="font-label-md text-label-md">{t(tab.key)}</span>
             </>
           )}
         </NavLink>

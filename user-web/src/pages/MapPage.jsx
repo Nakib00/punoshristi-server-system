@@ -8,6 +8,7 @@ import { haversineKm } from '../lib/geo';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
 import Icon from '../components/Icon';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const DHAKA_CENTER = [23.8103, 90.4125];
 const STATUS_COLOR = { active: '#006e1c', almost_full: '#ba1a1a', offline: '#717a6f' };
@@ -34,6 +35,7 @@ function RecenterOnLocate({ coords }) {
 
 export default function MapPage() {
   const { user, updateUser } = useAuth();
+  const { t } = useLanguage();
   const [machines, setMachines] = useState([]);
   const [coords, setCoords] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -71,7 +73,7 @@ export default function MapPage() {
           <Icon name="search" className="text-outline mr-sm" />
           <input
             className="bg-transparent border-none focus:ring-0 outline-none text-body-md w-full placeholder:text-outline-variant"
-            placeholder="Find nearest RVM..."
+            placeholder={t('map.findNearest')}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -89,11 +91,11 @@ export default function MapPage() {
         <div className="bg-white/90 backdrop-blur-md p-sm rounded-xl shadow-lg border border-outline-variant flex flex-col gap-xs">
           <div className="flex items-center gap-xs">
             <div className="w-3 h-3 rounded-full bg-secondary" />
-            <span className="text-label-md">Active</span>
+            <span className="text-label-md">{t('map.active')}</span>
           </div>
           <div className="flex items-center gap-xs">
             <div className="w-3 h-3 rounded-full bg-error" />
-            <span className="text-label-md">Almost Full</span>
+            <span className="text-label-md">{t('map.almostFull')}</span>
           </div>
         </div>
       </div>
@@ -128,12 +130,12 @@ export default function MapPage() {
                         (selected.status === 'almost_full' ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container')
                       }
                     >
-                      {selected.status === 'almost_full' ? 'Almost Full' : 'Active'}
+                      {selected.status === 'almost_full' ? t('map.almostFull') : t('map.active')}
                     </span>
                   </div>
                   <p className="text-on-surface-variant text-body-md flex items-center gap-xs mt-xs">
                     <Icon name="near_me" size="16px" />
-                    {selectedDistance != null ? `${selectedDistance.toFixed(1)} km away` : selected.location}
+                    {selectedDistance != null ? t('map.kmAway', { km: selectedDistance.toFixed(1) }) : selected.location}
                   </p>
                 </div>
                 <p className="text-on-surface-variant text-[12px] opacity-70">{selected.address || selected.location}</p>
@@ -145,7 +147,7 @@ export default function MapPage() {
                 className="flex-grow bg-primary text-white font-label-md py-3 rounded-full flex items-center justify-center gap-xs shadow-md active:scale-95 transition-transform"
               >
                 <Icon name="directions" size="18px" />
-                Get Directions
+                {t('map.getDirections')}
               </button>
               <button
                 onClick={() => handleFavorite(selected.id)}

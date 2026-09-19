@@ -1,30 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
+import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const ONBOARDING_FLAG = 'punoshristi/onboarded';
 
 const STEPS = [
-  {
-    icon: 'delete',
-    title: 'Drop Your Bottle',
-    body: 'Find a Punoshristi machine near you and insert your empty plastic PET bottle.',
-  },
-  {
-    icon: 'qr_code_scanner',
-    title: 'Scan & Earn Points',
-    body: 'Scan the QR code on the machine screen. Points hit your wallet instantly — no delays.',
-  },
-  {
-    icon: 'redeem',
-    title: 'Redeem Your Rewards',
-    body: 'Use your Punoshristi points for real discounts at partner restaurants, shops and cafes across Dhaka.',
-  },
+  { icon: 'delete', titleKey: 'onboarding.step1Title', bodyKey: 'onboarding.step1Body' },
+  { icon: 'qr_code_scanner', titleKey: 'onboarding.step2Title', bodyKey: 'onboarding.step2Body' },
+  { icon: 'redeem', titleKey: 'onboarding.step3Title', bodyKey: 'onboarding.step3Body' },
 ];
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const isLast = step === STEPS.length - 1;
   const current = STEPS[step];
 
@@ -35,6 +26,9 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen flex flex-col bg-white relative overflow-hidden">
+      <div className="absolute top-4 right-4 z-30">
+        <LanguageToggle />
+      </div>
       <section className="relative w-full h-[55vh] flex items-center justify-center bg-[#F0FAF2]">
         <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-primary-fixed opacity-20 rounded-full blur-3xl" />
         <div className="absolute bottom-[-5%] left-[-5%] w-48 h-48 bg-secondary-fixed opacity-20 rounded-full blur-2xl" />
@@ -58,8 +52,8 @@ export default function OnboardingPage() {
         </div>
 
         <div className="text-center space-y-md max-w-xs mx-auto">
-          <h1 className="font-headline-xl text-headline-lg-mobile text-primary tracking-tight">{current.title}</h1>
-          <p className="font-body-lg text-body-md text-on-surface-variant leading-relaxed px-sm">{current.body}</p>
+          <h1 className="font-headline-xl text-headline-lg-mobile text-primary tracking-tight">{t(current.titleKey)}</h1>
+          <p className="font-body-lg text-body-md text-on-surface-variant leading-relaxed px-sm">{t(current.bodyKey)}</p>
         </div>
 
         <div className="w-full flex flex-col gap-sm pt-lg">
@@ -67,19 +61,19 @@ export default function OnboardingPage() {
             onClick={() => (isLast ? finish() : setStep((s) => s + 1))}
             className="group w-full h-[64px] bg-primary text-white font-title-md text-title-md rounded-full flex items-center justify-center gap-sm active:scale-95 transition-all duration-200 shadow-lg shadow-primary/10"
           >
-            {isLast ? 'Get Started' : 'Next'}
+            {isLast ? t('onboarding.getStarted') : t('onboarding.next')}
             <Icon name="arrow_forward" />
           </button>
           {!isLast && (
             <button onClick={finish} className="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors">
-              Skip onboarding
+              {t('onboarding.skip')}
             </button>
           )}
           {isLast && (
             <div className="flex justify-center items-center gap-xs">
-              <span className="font-body-md text-body-md text-on-surface-variant">Already have an account?</span>
+              <span className="font-body-md text-body-md text-on-surface-variant">{t('onboarding.alreadyHaveAccount')}</span>
               <button onClick={finish} className="font-label-md text-label-md text-primary hover:underline font-bold">
-                Login
+                {t('onboarding.login')}
               </button>
             </div>
           )}

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import Icon from './Icon';
+import LanguageToggle from './LanguageToggle';
 
 export default function TopAppBar({ showBack = false, title, transparent = false }) {
   const navigate = useNavigate();
@@ -29,9 +30,12 @@ export default function TopAppBar({ showBack = false, title, transparent = false
           {title || 'Punoshristi'}
         </span>
       </div>
-      <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors active:scale-95">
-        <Icon name="notifications" className="text-on-surface-variant" />
-      </button>
+      <div className="flex items-center gap-2">
+        <LanguageToggle />
+        <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors active:scale-95">
+          <Icon name="notifications" className="text-on-surface-variant" />
+        </button>
+      </div>
     </header>
   );
 }

@@ -4,12 +4,15 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { redeemQrToken } from '../api';
 import { useAuth } from '../AuthContext';
 import Icon from '../components/Icon';
+import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const READER_ELEMENT_ID = 'qr-reader';
 
 export default function ScanPage() {
   const navigate = useNavigate();
   const { updateUser } = useAuth();
+  const { t } = useLanguage();
   const [status, setStatus] = useState('scanning'); // scanning | processing | error
   const [message, setMessage] = useState('');
   const [manualCode, setManualCode] = useState('');
@@ -22,7 +25,7 @@ export default function ScanPage() {
       scanner = new Html5Qrcode(READER_ELEMENT_ID);
     } catch (err) {
       setStatus('error');
-      setMessage(`Could not start the camera module: ${err?.message || err}`);
+      setMessage(`${t('scan.errCameraStart')}: ${err?.message || err}`);
       return undefined;
     }
     scannerRef.current = scanner;
@@ -41,7 +44,7 @@ export default function ScanPage() {
       )
       .catch(() => {
         setStatus('error');
-        setMessage('Could not access the camera. Please allow camera permission and try again, or enter the code manually below.');
+        setMessage(t('scan.errCameraAccess'));
       });
 
     return () => {
@@ -86,7 +89,7 @@ export default function ScanPage() {
       navigate('/success', { state: data, replace: true });
     } catch (err) {
       setStatus('error');
-      setMessage(err?.response?.data?.message || 'Could not verify this code. Please try again.');
+      setMessage(err?.response?.data?.message || t('scan.errVerify'));
     }
   }
 
@@ -132,7 +135,7 @@ export default function ScanPage() {
         )
         .catch(() => {
           setStatus('error');
-          setMessage('Could not access the camera. Try the manual code entry below.');
+          setMessage(t('scan.errCameraRetry'));
         });
     }, 100);
   }
@@ -147,9 +150,9 @@ export default function ScanPage() {
           >
             <Icon name="arrow_back" />
           </button>
-          <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold">Scan Machine QR</h1>
+          <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold">{t('scan.title')}</h1>
         </div>
-        <div className="w-10" />
+        <LanguageToggle dark />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center px-margin-mobile relative">
@@ -165,22 +168,22 @@ export default function ScanPage() {
           )}
           {status === 'processing' && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <p className="text-white font-title-md text-title-md">Verifying...</p>
+              <p className="text-white font-title-md text-title-md">{t('scan.verifying')}</p>
             </div>
           )}
         </div>
 
         <p className="text-white/80 text-center font-body-lg text-body-lg mb-lg">
-          {status === 'error' ? message : 'Point your camera at the machine QR code'}
+          {status === 'error' ? message : t('scan.pointCamera')}
         </p>
 
         <div className="w-full max-w-md bg-surface-container-lowest/10 backdrop-blur-md p-lg rounded-xl border border-white/10 mt-auto mb-xl">
           <form onSubmit={handleManualSubmit} className="flex flex-col gap-md">
-            <label className="text-white/60 font-label-md text-label-md">Or Enter Code Manually</label>
+            <label className="text-white/60 font-label-md text-label-md">{t('scan.orManual')}</label>
             <div className="flex flex-col gap-sm">
               <input
                 className="w-full bg-white/5 border border-white/20 rounded-lg py-3 px-4 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-secondary-container/50 focus:border-secondary-container transition-all"
-                placeholder="e.g. RVM-7729"
+                placeholder={t('scan.codePlaceholder')}
                 type="text"
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
@@ -190,7 +193,7 @@ export default function ScanPage() {
                 disabled={status === 'processing'}
                 className="w-full bg-secondary-container text-on-secondary-container py-4 rounded-full font-title-md text-title-md font-bold flex items-center justify-center gap-base active:scale-95 transition-transform duration-150 disabled:opacity-60"
               >
-                Confirm Code
+                {t('scan.confirmCode')}
                 <Icon name="check_circle" />
               </button>
               {status === 'error' && (
@@ -199,7 +202,7 @@ export default function ScanPage() {
                   onClick={handleRetry}
                   className="w-full bg-white/10 text-white py-3 rounded-full font-label-md text-label-md active:scale-95 transition-transform"
                 >
-                  Retry Camera Scan
+                  {t('scan.retryCamera')}
                 </button>
               )}
             </div>

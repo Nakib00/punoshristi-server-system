@@ -66,7 +66,11 @@ router.get('/activity', requireAuth, (req, res) => {
     .map((s) => ({
       id: s.id,
       type: 'recycle',
+      // `title` is kept for API backward-compatibility; clients that want a
+      // localized string should build it themselves from bottleCount/machineName.
       title: `${s.bottleCount} bottle${s.bottleCount === 1 ? '' : 's'} recycled${s.machineName ? ` at ${s.machineName}` : ''}`,
+      bottleCount: s.bottleCount,
+      machineName: s.machineName || null,
       pointsDelta: s.pointsEarned ?? s.bottleCount * 5,
       createdAt: s.createdAt,
     }));
@@ -79,6 +83,8 @@ router.get('/activity', requireAuth, (req, res) => {
       id: r.id,
       type: 'redemption',
       title: `Redeemed: ${r.offerTitle} at ${r.partnerName}`,
+      offerTitle: r.offerTitle,
+      partnerName: r.partnerName,
       pointsDelta: -r.pointsCost,
       createdAt: r.createdAt,
     }));

@@ -5,20 +5,22 @@ import { fetchMyStats } from '../api';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
 import Icon from '../components/Icon';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const MENU_ITEMS = [
-  { icon: 'redeem', label: 'Rewards', to: '/partners' },
-  { icon: 'history', label: 'History', to: '/history' },
-  { icon: 'location_on', label: 'Locations', to: '/map' },
-  { icon: 'settings', label: 'Settings', to: '/info/settings' },
-  { icon: 'privacy_tip', label: 'Privacy', to: '/info/privacy' },
-  { icon: 'help', label: 'Help', to: '/info/help' },
-  { icon: 'contact_support', label: 'Contact', to: '/info/contact' },
-  { icon: 'star', label: 'Rate', to: '/info/rate' },
+  { icon: 'redeem', key: 'profile.rewards', to: '/partners' },
+  { icon: 'history', key: 'profile.history', to: '/history' },
+  { icon: 'location_on', key: 'profile.locations', to: '/map' },
+  { icon: 'settings', key: 'profile.settings', to: '/info/settings' },
+  { icon: 'privacy_tip', key: 'profile.privacy', to: '/info/privacy' },
+  { icon: 'help', key: 'profile.help', to: '/info/help' },
+  { icon: 'contact_support', key: 'profile.contact', to: '/info/contact' },
+  { icon: 'star', key: 'profile.rate', to: '/info/rate' },
 ];
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
 
@@ -49,7 +51,7 @@ export default function ProfilePage() {
           </div>
           <h2 className="font-headline-lg text-headline-lg text-primary">{user?.name}</h2>
           <div className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full mt-xs font-label-md text-label-md">
-            Eco Warrior Level {level?.level ?? 1}
+            {t('profile.ecoWarriorLevel', { level: level?.level ?? 1 })}
           </div>
         </section>
 
@@ -57,17 +59,17 @@ export default function ProfilePage() {
           <div className="bg-surface-container-low rounded-xl p-sm flex flex-col items-center shadow-[0px_4px_12px_rgba(0,67,23,0.02)]">
             <Icon name="savings" filled className="text-primary mb-xs" />
             <span className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{stats?.points ?? user?.points ?? 0}</span>
-            <span className="font-label-md text-label-md text-on-surface-variant">Points</span>
+            <span className="font-label-md text-label-md text-on-surface-variant">{t('profile.points')}</span>
           </div>
           <div className="bg-surface-container-low rounded-xl p-sm flex flex-col items-center shadow-[0px_4px_12px_rgba(0,67,23,0.02)] border-x border-outline-variant/30">
             <Icon name="eco" filled className="text-primary mb-xs" />
             <span className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{stats?.bottleCount ?? user?.bottleCount ?? 0}</span>
-            <span className="font-label-md text-label-md text-on-surface-variant">Bottles</span>
+            <span className="font-label-md text-label-md text-on-surface-variant">{t('profile.bottles')}</span>
           </div>
           <div className="bg-surface-container-low rounded-xl p-sm flex flex-col items-center shadow-[0px_4px_12px_rgba(0,67,23,0.02)]">
             <Icon name="military_tech" filled className="text-primary mb-xs" />
             <span className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">#{stats?.rank ?? '—'}</span>
-            <span className="font-label-md text-label-md text-on-surface-variant">Rank</span>
+            <span className="font-label-md text-label-md text-on-surface-variant">{t('profile.rank')}</span>
           </div>
         </section>
 
@@ -76,19 +78,16 @@ export default function ProfilePage() {
             <Icon name="forest" filled size="120px" />
           </div>
           <div className="relative z-10">
-            <h3 className="font-headline-lg-mobile text-headline-lg-mobile mb-sm">Your Green Impact 🌿</h3>
-            <p className="font-body-md text-body-md opacity-90 mb-md leading-relaxed">
-              You&apos;ve saved approximately {co2}kg of CO2 from entering the atmosphere this month. Keep up the great
-              work!
-            </p>
+            <h3 className="font-headline-lg-mobile text-headline-lg-mobile mb-sm">{t('profile.greenImpact')}</h3>
+            <p className="font-body-md text-body-md opacity-90 mb-md leading-relaxed">{t('profile.co2Message', { co2 })}</p>
             <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
               <div className="bg-secondary-fixed h-full rounded-full shadow-[0px_0px_8px_rgba(145,247,142,0.6)]" style={{ width: `${level?.progressPercent ?? 0}%` }} />
             </div>
             <div className="flex justify-between mt-2 font-label-md text-label-md opacity-80">
-              <span>Level {level?.level ?? 1} Progress</span>
+              <span>{t('profile.levelProgress', { level: level?.level ?? 1 })}</span>
               <span>
                 {level ? level.lifetimePoints - level.currentLevelFloor : 0}/
-                {level?.nextLevelAt != null ? level.nextLevelAt - level.currentLevelFloor : '—'} Pts
+                {level?.nextLevelAt != null ? level.nextLevelAt - level.currentLevelFloor : '—'} {t('profile.ptsSuffix')}
               </span>
             </div>
           </div>
@@ -98,12 +97,12 @@ export default function ProfilePage() {
           <div className="flex flex-col">
             {MENU_ITEMS.map((item, i) => (
               <button
-                key={item.label}
+                key={item.key}
                 onClick={() => navigate(item.to)}
                 className={`flex items-center gap-md p-md hover:bg-surface-container transition-colors ${i < MENU_ITEMS.length - 1 ? 'border-b border-surface-variant/50' : ''}`}
               >
                 <Icon name={item.icon} className="text-primary" />
-                <span className="font-body-lg text-body-lg flex-grow text-left">{item.label}</span>
+                <span className="font-body-lg text-body-lg flex-grow text-left">{t(item.key)}</span>
                 <Icon name="chevron_right" className="text-outline" />
               </button>
             ))}
@@ -115,7 +114,7 @@ export default function ProfilePage() {
           className="w-full py-md bg-error/10 text-error font-headline-lg-mobile text-headline-lg-mobile rounded-full flex items-center justify-center gap-md hover:bg-error/20 transition-colors active:scale-95 duration-200"
         >
           <Icon name="logout" />
-          Logout
+          {t('profile.logout')}
         </button>
       </main>
       <BottomNav />

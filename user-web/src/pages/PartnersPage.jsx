@@ -4,9 +4,11 @@ import { fetchPartners } from '../api';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
 import Icon from '../components/Icon';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function PartnersPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [partners, setPartners] = useState([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
@@ -34,8 +36,8 @@ export default function PartnersPage() {
       <TopAppBar />
       <main className="flex-grow pt-20 pb-24 px-margin-mobile">
         <section className="mb-lg">
-          <h2 className="font-headline-xl text-headline-xl text-primary">Our Partners</h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-xs">Redeem your Eco-Points for exclusive rewards.</p>
+          <h2 className="font-headline-xl text-headline-xl text-primary">{t('partners.title')}</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-xs">{t('partners.subtitle')}</p>
         </section>
 
         <section className="mb-lg">
@@ -43,7 +45,7 @@ export default function PartnersPage() {
             <Icon name="search" className="absolute left-4 text-outline" />
             <input
               className="w-full h-12 pl-12 pr-4 bg-white border border-outline-variant rounded-xl text-body-md focus:outline-none focus:ring-2 focus:ring-secondary-container transition-all"
-              placeholder="Search for stores or offers..."
+              placeholder={t('partners.searchPlaceholder')}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -64,7 +66,7 @@ export default function PartnersPage() {
                     : 'bg-surface-container-low text-on-surface-variant border border-outline-variant hover:bg-surface-container-high')
                 }
               >
-                {c}
+                {c === 'All' ? t('partners.all') : c}
               </button>
             ))}
           </div>
@@ -78,11 +80,11 @@ export default function PartnersPage() {
             >
               <div className="z-10 w-full">
                 <span className="inline-block px-2 py-1 bg-secondary-container text-on-secondary-container font-label-md text-label-md rounded-lg mb-xs">
-                  FEATURED
+                  {t('partners.featured')}
                 </span>
                 <h3 className="font-headline-lg text-headline-lg leading-tight">{featured.name}</h3>
                 <p className="font-body-md text-body-md opacity-90 mt-xs">
-                  From {featured.cheapestOfferCost ?? '—'} points at {featured.category}
+                  {t('partners.fromPointsAt', { points: featured.cheapestOfferCost ?? '—', category: featured.category })}
                 </p>
               </div>
               <div className="absolute right-[-20px] bottom-[-20px] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
@@ -102,21 +104,19 @@ export default function PartnersPage() {
               </p>
               <div className="bg-secondary-container px-2 py-0.5 rounded-full mb-md">
                 <p className="font-label-md text-label-md text-on-secondary-container">
-                  {p.cheapestOfferCost ?? '—'} Points
+                  {p.cheapestOfferCost ?? '—'} {t('partners.pointsSuffix')}
                 </p>
               </div>
               <button
                 onClick={() => navigate(`/partners/${p.id}`)}
                 className="w-full py-2 bg-primary text-white rounded-full font-label-md text-label-md hover:bg-primary-container transition-colors active:scale-95 duration-150"
               >
-                View Offer
+                {t('partners.viewOffer')}
               </button>
             </div>
           ))}
           {filtered.length === 0 && (
-            <p className="col-span-2 text-center font-body-md text-body-md text-on-surface-variant py-xl">
-              No partners found.
-            </p>
+            <p className="col-span-2 text-center font-body-md text-body-md text-on-surface-variant py-xl">{t('partners.noPartners')}</p>
           )}
         </section>
       </main>

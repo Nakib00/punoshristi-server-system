@@ -4,9 +4,12 @@ import { useAuth } from '../AuthContext';
 import { describeAuthError } from '../api';
 import logo from '../assets/logo.png';
 import Icon from '../components/Icon';
+import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,23 +24,23 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     if (!name.trim() || !email.trim() || !password || !phone.trim()) {
-      setError('Please fill in your name, phone, email and password.');
+      setError(t('register.errRequired'));
       return;
     }
     if (!/^\d{11}$/.test(phone.trim())) {
-      setError('Phone number must be exactly 11 digits (e.g. 01712345678).');
+      setError(t('register.errPhoneFormat'));
       return;
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(t('register.errPasswordLength'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('register.errPasswordMismatch'));
       return;
     }
     if (!agreed) {
-      setError('Please agree to the Terms of Service and Privacy Policy.');
+      setError(t('register.errAgreeTerms'));
       return;
     }
     setSubmitting(true);
@@ -45,7 +48,7 @@ export default function RegisterPage() {
       await register(name.trim(), email.trim(), password, phone.trim());
       navigate('/verify-otp', { replace: true });
     } catch (err) {
-      setError(describeAuthError(err, 'Registration failed. Please try again.'));
+      setError(describeAuthError(err, t('register.errGeneric')));
     } finally {
       setSubmitting(false);
     }
@@ -53,22 +56,23 @@ export default function RegisterPage() {
 
   return (
     <main className="flex-grow flex flex-col items-center justify-start px-margin-mobile py-xl max-w-lg mx-auto w-full min-h-screen">
+      <div className="fixed top-4 right-4 z-30">
+        <LanguageToggle />
+      </div>
       <div className="mb-lg flex flex-col items-center">
         <img alt="Punoshristi Logo" className="h-16 w-16 object-contain rounded-full mb-md" src={logo} />
-        <h1 className="font-headline-xl text-headline-xl text-primary text-center">Create Your Account</h1>
-        <p className="font-body-lg text-body-lg text-on-surface-variant text-center mt-xs">
-          Join thousands recycling for rewards
-        </p>
+        <h1 className="font-headline-xl text-headline-xl text-primary text-center">{t('register.title')}</h1>
+        <p className="font-body-lg text-body-lg text-on-surface-variant text-center mt-xs">{t('register.subtitle')}</p>
       </div>
 
       <form className="w-full space-y-md" onSubmit={handleSubmit}>
         <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Full Name</label>
+          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">{t('register.fullName')}</label>
           <div className="relative">
             <Icon name="person" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
             <input
               className="w-full bg-surface-container-low border-[1.5px] border-outline-variant focus:border-secondary rounded-xl py-3 pl-12 pr-md outline-none transition-all placeholder:text-on-surface-variant/50"
-              placeholder="John Doe"
+              placeholder={t('register.fullNamePlaceholder')}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -78,7 +82,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Phone Number</label>
+          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">{t('register.phoneNumber')}</label>
           <div className="flex gap-xs">
             <div className="flex items-center bg-surface-container-low border-[1.5px] border-outline-variant rounded-xl py-3 px-md space-x-xs shrink-0 w-20 justify-center">
               <span className="font-body-md text-on-surface">+88</span>
@@ -100,7 +104,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="space-y-xs">
-          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Email</label>
+          <label className="font-label-md text-label-md text-on-surface-variant ml-xs">{t('register.email')}</label>
           <div className="relative">
             <Icon name="mail" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
             <input
@@ -116,7 +120,7 @@ export default function RegisterPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
           <div className="space-y-xs">
-            <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Password</label>
+            <label className="font-label-md text-label-md text-on-surface-variant ml-xs">{t('register.password')}</label>
             <div className="relative">
               <Icon name="lock" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
               <input
@@ -130,7 +134,7 @@ export default function RegisterPage() {
             </div>
           </div>
           <div className="space-y-xs">
-            <label className="font-label-md text-label-md text-on-surface-variant ml-xs">Confirm Password</label>
+            <label className="font-label-md text-label-md text-on-surface-variant ml-xs">{t('register.confirmPassword')}</label>
             <div className="relative">
               <Icon name="verified_user" className="absolute left-md top-1/2 -translate-y-1/2 text-primary" />
               <input
@@ -154,8 +158,9 @@ export default function RegisterPage() {
             onChange={(e) => setAgreed(e.target.checked)}
           />
           <label className="font-body-md text-body-md text-on-surface-variant leading-tight" htmlFor="terms">
-            I agree to the <span className="text-primary font-label-md">Terms of Service</span> and{' '}
-            <span className="text-primary font-label-md">Privacy Policy</span>.
+            {t('register.agreePrefix')} <span className="text-primary font-label-md">{t('register.termsOfService')}</span>{' '}
+            {t('register.and')} <span className="text-primary font-label-md">{t('register.privacyPolicy')}</span>
+            {t('register.agreeSuffix')}
           </label>
         </div>
 
@@ -166,14 +171,14 @@ export default function RegisterPage() {
           type="submit"
           disabled={submitting}
         >
-          {submitting ? 'Creating account...' : 'Create Account'}
+          {submitting ? t('register.creating') : t('register.createAccount')}
         </button>
       </form>
 
       <p className="mt-xl font-body-lg text-body-lg text-on-surface-variant">
-        Already have an account?{' '}
+        {t('register.haveAccount')}{' '}
         <Link className="text-primary font-bold hover:underline ml-xs" to="/login">
-          Login Here
+          {t('register.loginHere')}
         </Link>
       </p>
     </main>

@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { sendOtp, verifyOtp } from '../api';
 import Icon from '../components/Icon';
+import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const RESEND_COOLDOWN_S = 45;
 
 export default function OtpVerificationPage() {
   const { user, updateUser } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [digits, setDigits] = useState(Array(6).fill(''));
   const [error, setError] = useState('');
@@ -28,8 +31,8 @@ export default function OtpVerificationPage() {
 
   useEffect(() => {
     if (cooldown <= 0) return undefined;
-    const t = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(timer);
   }, [cooldown]);
 
   async function requestCode() {
@@ -37,10 +40,10 @@ export default function OtpVerificationPage() {
     setSending(true);
     try {
       const res = await sendOtp();
-      setInfo(res.devCode ? `Dev mode: your code is ${res.devCode} (no SMS gateway configured yet)` : 'Verification code sent.');
+      setInfo(res.devCode ? `${t('otp.devModePrefix')} ${res.devCode} ${t('otp.devModeSuffix')}` : t('otp.codeSent'));
       setCooldown(RESEND_COOLDOWN_S);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Could not send verification code.');
+      setError(err?.response?.data?.message || t('otp.errSend'));
     } finally {
       setSending(false);
     }
@@ -67,7 +70,7 @@ export default function OtpVerificationPage() {
     setError('');
     const code = digits.join('');
     if (code.length !== 6) {
-      setError('Enter the full 6-digit code.');
+      setError(t('otp.errIncomplete'));
       return;
     }
     setVerifying(true);
@@ -76,7 +79,7 @@ export default function OtpVerificationPage() {
       updateUser(verifiedUser);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err?.response?.data?.message || 'Verification failed.');
+      setError(err?.response?.data?.message || t('otp.errFailed'));
     } finally {
       setVerifying(false);
     }
@@ -84,15 +87,18 @@ export default function OtpVerificationPage() {
 
   return (
     <div className="bg-surface text-on-surface font-body-md min-h-screen">
+      <div className="fixed top-4 right-4 z-30">
+        <LanguageToggle />
+      </div>
       <main className="min-h-screen flex flex-col items-center px-margin-mobile pt-xl pb-xl">
         <div className="mb-xl flex flex-col items-center">
           <div className="w-20 h-20 bg-secondary-container flex items-center justify-center rounded-full mb-lg shadow-sm">
             <Icon name="lock" filled size="40px" className="text-on-secondary-container" />
           </div>
           <div className="text-center max-w-sm">
-            <h1 className="font-headline-xl text-headline-xl text-primary mb-sm">Verify Your Number</h1>
+            <h1 className="font-headline-xl text-headline-xl text-primary mb-sm">{t('otp.title')}</h1>
             <p className="font-body-md text-on-surface-variant px-md">
-              We sent a 6-digit code to <span className="font-bold text-on-surface">+88{user?.phone}</span>
+              {t('otp.subtitlePrefix')} <span className="font-bold text-on-surface">+88{user?.phone}</span>
             </p>
           </div>
         </div>
@@ -124,7 +130,7 @@ export default function OtpVerificationPage() {
                 disabled={cooldown > 0 || sending}
                 onClick={requestCode}
               >
-                {sending ? 'Sending...' : 'Resend OTP'}
+                {sending ? t('otp.sending') : t('otp.resend')}
               </button>
               {cooldown > 0 && (
                 <>
@@ -143,7 +149,7 @@ export default function OtpVerificationPage() {
               disabled={verifying}
               className="w-full h-14 bg-primary text-on-primary font-title-md rounded-full flex items-center justify-center gap-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg disabled:opacity-60"
             >
-              <span>{verifying ? 'Verifying...' : 'Verify & Continue'}</span>
+              <span>{verifying ? t('otp.verifying') : t('otp.verify')}</span>
               {!verifying && <Icon name="chevron_right" />}
             </button>
           </div>

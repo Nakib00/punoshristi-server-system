@@ -4,9 +4,12 @@ import { useAuth } from '../AuthContext';
 import { describeAuthError } from '../api';
 import logo from '../assets/logo.png';
 import Icon from '../components/Icon';
+import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +21,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     if (!identifier.trim() || !password) {
-      setError('Please enter your phone/email and password.');
+      setError(t('login.errRequired'));
       return;
     }
     setSubmitting(true);
@@ -26,7 +29,7 @@ export default function LoginPage() {
       const user = await login(identifier.trim(), password);
       navigate(user.phoneVerified ? '/dashboard' : '/verify-otp', { replace: true });
     } catch (err) {
-      setError(describeAuthError(err, 'Could not log in. Please try again.'));
+      setError(describeAuthError(err, t('login.errGeneric')));
     } finally {
       setSubmitting(false);
     }
@@ -34,24 +37,27 @@ export default function LoginPage() {
 
   return (
     <main className="w-full max-w-[440px] mx-auto min-h-screen px-margin-mobile py-xl flex flex-col items-center justify-center space-y-xl">
+      <div className="fixed top-4 right-4 z-30">
+        <LanguageToggle />
+      </div>
       <header className="w-full flex flex-col items-center">
         <img alt="Punoshristi Logo" className="w-24 h-24 object-contain mb-lg rounded-full" src={logo} />
       </header>
 
       <div className="w-full text-center space-y-xs">
-        <h1 className="font-headline-xl text-headline-xl text-on-surface">Welcome Back 👋</h1>
-        <p className="font-body-lg text-body-lg text-on-surface-variant">Login to check your points and rewards</p>
+        <h1 className="font-headline-xl text-headline-xl text-on-surface">{t('login.welcomeBack')}</h1>
+        <p className="font-body-lg text-body-lg text-on-surface-variant">{t('login.subtitle')}</p>
       </div>
 
       <form className="w-full flex flex-col space-y-md" onSubmit={handleSubmit}>
         <div className="flex flex-col space-y-xs">
           <label className="font-label-md text-label-md text-on-surface-variant ml-xs" htmlFor="identifier">
-            Phone or Email
+            {t('login.phoneOrEmail')}
           </label>
           <input
             id="identifier"
             className="w-full h-14 px-md bg-surface border border-outline-variant rounded-xl focus:ring-2 focus:ring-secondary-container focus:border-secondary outline-none transition-all duration-200 font-body-md text-on-surface"
-            placeholder="e.g. 01XXXXXXXXX or email@example.com"
+            placeholder={t('login.phoneOrEmailPlaceholder')}
             type="text"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
@@ -61,7 +67,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col space-y-xs">
           <label className="font-label-md text-label-md text-on-surface-variant ml-xs" htmlFor="password">
-            Password
+            {t('login.password')}
           </label>
           <div className="relative">
             <input
@@ -90,15 +96,15 @@ export default function LoginPage() {
           type="submit"
           disabled={submitting}
         >
-          {submitting ? 'Logging in...' : 'Login'}
+          {submitting ? t('login.loggingIn') : t('login.loginBtn')}
         </button>
       </form>
 
       <footer className="w-full text-center">
         <p className="font-body-md text-body-md text-on-surface-variant">
-          Don&apos;t have an account?{' '}
+          {t('login.noAccount')}{' '}
           <Link className="text-secondary font-bold hover:underline" to="/register">
-            Register Here
+            {t('login.registerHere')}
           </Link>
         </p>
       </footer>

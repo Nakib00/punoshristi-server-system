@@ -3,32 +3,37 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { fetchMachines, fetchMyActivity, fetchMyStats, fetchPartners } from '../api';
 import { haversineKm } from '../lib/geo';
+import { formatActivityTitle } from '../lib/activity';
 import TopAppBar from '../components/TopAppBar';
 import BottomNav from '../components/BottomNav';
 import Icon from '../components/Icon';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const ACTIVITY_ICON = { recycle: 'eco', redemption: 'payments' };
 
-function timeAgo(iso) {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins} min ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `Today, ${new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return `Yesterday, ${new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-  return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-}
-
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
   const [machines, setMachines] = useState([]);
   const [partners, setPartners] = useState([]);
   const [coords, setCoords] = useState(null);
+
+  function timeAgo(iso) {
+    const locale = lang === 'bn' ? 'bn-BD' : 'en-US';
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return lang === 'bn' ? 'এইমাত্র' : 'Just now';
+    if (mins < 60) return lang === 'bn' ? `${mins} মিনিট আগে` : `${mins} min ago`;
+    const hours = Math.floor(mins / 60);
+    const timeStr = new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    if (hours < 24) return lang === 'bn' ? `আজ, ${timeStr}` : `Today, ${timeStr}`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return lang === 'bn' ? `গতকাল, ${timeStr}` : `Yesterday, ${timeStr}`;
+    return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  }
 
   useEffect(() => {
     fetchMyStats().then(setStats).catch(() => {});
@@ -61,17 +66,19 @@ export default function DashboardPage() {
       <TopAppBar />
       <main className="pt-20 px-margin-mobile space-y-lg">
         <section>
-          <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Good day, {firstName} 👋</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Every bottle counts towards a greener planet.</p>
+          <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">
+            {t('dashboard.greeting', { name: firstName })}
+          </h1>
+          <p className="font-body-md text-body-md text-on-surface-variant">{t('dashboard.tagline')}</p>
         </section>
 
         <section className="relative overflow-hidden bg-gradient-to-br from-[#004317] to-[#1a5c2a] rounded-xl p-lg text-white shadow-lg">
           <div className="relative z-10 flex flex-col gap-md">
             <div>
-              <span className="font-label-md text-label-md opacity-80">Total Eco-Balance</span>
+              <span className="font-label-md text-label-md opacity-80">{t('dashboard.ecoBalance')}</span>
               <div className="flex items-baseline gap-2">
                 <span className="font-headline-xl text-headline-xl">{(stats?.points ?? user?.points ?? 0).toLocaleString()}</span>
-                <span className="font-title-md text-title-md">Points</span>
+                <span className="font-title-md text-title-md">{t('dashboard.points')}</span>
               </div>
               <span className="font-body-md text-body-md opacity-90">
                 ≈ {Math.round((stats?.points ?? user?.points ?? 0) / 10)} BDT
@@ -80,11 +87,15 @@ export default function DashboardPage() {
             <div className="flex gap-sm flex-wrap">
               <div className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2">
                 <Icon name="recycling" size="18px" />
-                <span className="font-label-md text-label-md">{stats?.bottleCount ?? user?.bottleCount ?? 0} Bottles</span>
+                <span className="font-label-md text-label-md">
+                  {stats?.bottleCount ?? user?.bottleCount ?? 0} {t('dashboard.bottles')}
+                </span>
               </div>
               <div className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2">
                 <Icon name="military_tech" size="18px" />
-                <span className="font-label-md text-label-md">Rank #{stats?.rank ?? '—'}</span>
+                <span className="font-label-md text-label-md">
+                  {t('dashboard.rank')} #{stats?.rank ?? '—'}
+                </span>
               </div>
             </div>
           </div>
@@ -93,12 +104,12 @@ export default function DashboardPage() {
 
         <section className="grid grid-cols-4 gap-sm">
           {[
-            { icon: 'qr_code_scanner', label: 'Scan QR', to: '/scan', accent: true },
-            { icon: 'map', label: 'Find RVM', to: '/map' },
-            { icon: 'redeem', label: 'Redeem', to: '/partners' },
-            { icon: 'leaderboard', label: 'Ranks', to: '/leaderboard' },
+            { icon: 'qr_code_scanner', label: t('dashboard.scanQr'), to: '/scan', accent: true },
+            { icon: 'map', label: t('dashboard.findRvm'), to: '/map' },
+            { icon: 'redeem', label: t('dashboard.redeem'), to: '/partners' },
+            { icon: 'leaderboard', label: t('dashboard.ranks'), to: '/leaderboard' },
           ].map((action) => (
-            <button key={action.label} className="flex flex-col items-center gap-xs" onClick={() => navigate(action.to)}>
+            <button key={action.to} className="flex flex-col items-center gap-xs" onClick={() => navigate(action.to)}>
               <div
                 className={
                   'w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm hover:opacity-80 transition-opacity ' +
@@ -115,9 +126,9 @@ export default function DashboardPage() {
         {nearest && (
           <section className="space-y-md">
             <div className="flex justify-between items-center">
-              <h2 className="font-title-md text-title-md text-on-surface">Nearby Machine</h2>
+              <h2 className="font-title-md text-title-md text-on-surface">{t('dashboard.nearbyMachine')}</h2>
               <button className="font-label-md text-label-md text-secondary" onClick={() => navigate('/map')}>
-                View All
+                {t('dashboard.viewAll')}
               </button>
             </div>
             <div className="bg-white rounded-xl overflow-hidden shadow-sm flex p-md gap-md items-center">
@@ -129,12 +140,12 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-1 text-on-surface-variant">
                   <Icon name="near_me" size="16px" />
                   <span className="font-body-md text-body-md">
-                    {nearest.distanceKm != null ? `${nearest.distanceKm.toFixed(1)} km away` : nearest.location}
+                    {nearest.distanceKm != null ? t('dashboard.kmAway', { km: nearest.distanceKm.toFixed(1) }) : nearest.location}
                   </span>
                 </div>
                 <div className="mt-1">
                   <span className="inline-flex items-center px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-md text-[10px]">
-                    ACTIVE &amp; READY
+                    {t('dashboard.activeReady')}
                   </span>
                 </div>
               </div>
@@ -151,9 +162,9 @@ export default function DashboardPage() {
         )}
 
         <section className="space-y-md">
-          <h2 className="font-title-md text-title-md text-on-surface">Recent Activity</h2>
+          <h2 className="font-title-md text-title-md text-on-surface">{t('dashboard.recentActivity')}</h2>
           {activity.length === 0 ? (
-            <p className="font-body-md text-body-md text-on-surface-variant">No activity yet — go recycle a bottle!</p>
+            <p className="font-body-md text-body-md text-on-surface-variant">{t('dashboard.noActivity')}</p>
           ) : (
             <div className="space-y-sm">
               {activity.map((a) => (
@@ -163,13 +174,13 @@ export default function DashboardPage() {
                       <Icon name={ACTIVITY_ICON[a.type] || 'eco'} />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-label-md text-label-md text-on-surface truncate">{a.title}</p>
+                      <p className="font-label-md text-label-md text-on-surface truncate">{formatActivityTitle(a, t)}</p>
                       <p className="text-[11px] text-on-surface-variant">{timeAgo(a.createdAt)}</p>
                     </div>
                   </div>
                   <span className={`font-title-md text-title-md shrink-0 ${a.pointsDelta >= 0 ? 'text-secondary' : 'text-error'}`}>
                     {a.pointsDelta >= 0 ? '+' : ''}
-                    {a.pointsDelta} pts
+                    {a.pointsDelta} {t('dashboard.pts')}
                   </span>
                 </div>
               ))}
@@ -179,7 +190,7 @@ export default function DashboardPage() {
 
         {featuredPartners.length > 0 && (
           <section className="space-y-md">
-            <h2 className="font-title-md text-title-md text-on-surface">Exclusive Offers</h2>
+            <h2 className="font-title-md text-title-md text-on-surface">{t('dashboard.exclusiveOffers')}</h2>
             <div className="flex overflow-x-auto gap-md pb-4 hide-scrollbar">
               {featuredPartners.map((p) => (
                 <button
@@ -191,9 +202,7 @@ export default function DashboardPage() {
                     {p.category.toUpperCase()}
                   </span>
                   <h4 className="text-white font-title-md text-title-md leading-tight">{p.name}</h4>
-                  <p className="text-white/80 font-label-md text-[10px]">
-                    From {p.cheapestOfferCost ?? '—'} Points
-                  </p>
+                  <p className="text-white/80 font-label-md text-[10px]">{t('dashboard.fromPoints', { points: p.cheapestOfferCost ?? '—' })}</p>
                 </button>
               ))}
             </div>

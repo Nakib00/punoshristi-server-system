@@ -4,11 +4,13 @@ import { fetchLeaderboard, fetchMyRank } from '../api';
 import { useAuth } from '../AuthContext';
 import BottomNav from '../components/BottomNav';
 import Icon from '../components/Icon';
+import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const RANGES = [
-  { key: 'week', label: 'This Week' },
-  { key: 'month', label: 'This Month' },
-  { key: 'all', label: 'All Time' },
+  { key: 'week', labelKey: 'leaderboard.thisWeek' },
+  { key: 'month', labelKey: 'leaderboard.thisMonth' },
+  { key: 'all', labelKey: 'leaderboard.allTime' },
 ];
 
 const PODIUM_STYLE = {
@@ -19,6 +21,7 @@ const PODIUM_STYLE = {
 
 export default function LeaderboardPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [range, setRange] = useState('week');
   const [board, setBoard] = useState({ leaderboard: [], totalUsers: 0 });
@@ -39,8 +42,8 @@ export default function LeaderboardPage() {
         <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center active:scale-95 transition-transform">
           <Icon name="arrow_back" className="text-primary" />
         </button>
-        <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Leaderboard</h1>
-        <div className="w-10" />
+        <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">{t('leaderboard.title')}</h1>
+        <LanguageToggle />
       </header>
 
       <main className="px-margin-mobile">
@@ -54,7 +57,7 @@ export default function LeaderboardPage() {
                 (range === r.key ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high')
               }
             >
-              {r.label}
+              {t(r.labelKey)}
             </button>
           ))}
         </section>
@@ -75,7 +78,9 @@ export default function LeaderboardPage() {
                   </div>
                   <div className={`${style.bg} w-full rounded-t-xl ${style.height} flex flex-col items-center pt-md shadow-sm`}>
                     <span className="font-bold text-label-md text-center px-xs truncate w-full">{u.name}</span>
-                    <span className="font-bold text-label-md mt-xs">{u.points.toLocaleString()} pts</span>
+                    <span className="font-bold text-label-md mt-xs">
+                      {u.points.toLocaleString()} {t('leaderboard.pts')}
+                    </span>
                     <span className="font-extrabold text-[24px] mt-base">{u.rank}</span>
                   </div>
                 </div>
@@ -83,9 +88,7 @@ export default function LeaderboardPage() {
             })}
           </section>
         ) : (
-          <p className="mt-lg mb-xl font-body-md text-body-md text-on-surface-variant text-center">
-            No recycling activity yet for this period.
-          </p>
+          <p className="mt-lg mb-xl font-body-md text-body-md text-on-surface-variant text-center">{t('leaderboard.noActivity')}</p>
         )}
 
         {myRank && myRank.rank && (
@@ -96,19 +99,23 @@ export default function LeaderboardPage() {
                   #{myRank.rank}
                 </div>
                 <div>
-                  <h3 className="font-title-md text-title-md text-on-surface">You</h3>
-                  <p className="font-label-md text-label-md text-on-surface-variant">{myRank.totalUsers} recyclers ranked</p>
+                  <h3 className="font-title-md text-title-md text-on-surface">{t('leaderboard.you')}</h3>
+                  <p className="font-label-md text-label-md text-on-surface-variant">{t('leaderboard.recyclersRanked', { count: myRank.totalUsers })}</p>
                 </div>
               </div>
-              <span className="font-bold text-primary text-title-md">{myRank.points.toLocaleString()} pts</span>
+              <span className="font-bold text-primary text-title-md">
+                {myRank.points.toLocaleString()} {t('leaderboard.pts')}
+              </span>
             </div>
           </section>
         )}
 
         <section>
           <div className="flex justify-between items-center mb-md">
-            <h2 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">Top Recyclers</h2>
-            <span className="text-on-surface-variant text-label-md font-label-md">{board.totalUsers} Users</span>
+            <h2 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">{t('leaderboard.topRecyclers')}</h2>
+            <span className="text-on-surface-variant text-label-md font-label-md">
+              {board.totalUsers} {t('leaderboard.users')}
+            </span>
           </div>
           <div className="flex flex-col gap-sm">
             {rest.map((u) => (
@@ -120,7 +127,9 @@ export default function LeaderboardPage() {
                   </div>
                   <span className="font-bold text-on-surface truncate">{u.name}</span>
                 </div>
-                <span className="font-bold text-on-surface-variant shrink-0">{u.points.toLocaleString()} pts</span>
+                <span className="font-bold text-on-surface-variant shrink-0">
+                  {u.points.toLocaleString()} {t('leaderboard.pts')}
+                </span>
               </div>
             ))}
           </div>
