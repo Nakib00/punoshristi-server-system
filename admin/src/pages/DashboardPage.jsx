@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { acknowledgeNotification, fetchNotifications, fetchStats, notifyPartner, SOCKET_URL } from '../api';
 import { useAdminAuth } from '../AdminAuthContext';
+import Icon from '../components/Icon';
+
+const STAT_ITEMS = [
+  { key: 'totalUsers', label: 'Total Users', icon: 'group' },
+  { key: 'totalMachines', label: 'Total Machines', icon: 'precision_manufacturing' },
+  { key: 'activeMachines', label: 'Active Machines', icon: 'bolt' },
+  { key: 'totalScans', label: 'Total Scans', icon: 'qr_code_scanner' },
+  { key: 'totalBottlesDeposited', label: 'Bottles Deposited', icon: 'eco', variant: 'highlight' },
+  { key: 'pendingAlerts', label: 'Pending Alerts', icon: 'warning', variant: 'warning' },
+];
 
 export default function DashboardPage() {
   const { token } = useAdminAuth();
@@ -41,15 +51,18 @@ export default function DashboardPage() {
     setNotifications((prev) => prev.map((n) => (n.id === id ? notification : n)));
   }
 
-  if (loading) return <p className="loading-text">লোড হচ্ছে...</p>;
+  if (loading) return <p className="loading-text">Loading...</p>;
 
   return (
     <div>
-      <h1 className="page-title">ওভারভিউ</h1>
+      <h1 className="page-title">Overview</h1>
 
       {notifications.length > 0 && (
         <div className="alert-box">
-          <h3>⚠️ মেশিন পূর্ণ হওয়ার সতর্কতা</h3>
+          <h3>
+            <Icon name="warning" filled size="18px" />
+            Machine Capacity Alerts
+          </h3>
           {notifications.map((n) => (
             <div key={n.id} className="alert-item">
               <div>
@@ -62,10 +75,12 @@ export default function DashboardPage() {
                   onClick={() => handleNotifyPartner(n.id)}
                   disabled={n.partnerNotified}
                 >
-                  {n.partnerNotified ? '✓ পার্টনারকে জানানো হয়েছে' : '📨 ভাঙ্গারিয়া পার্টনারকে মেসেজ পাঠান'}
+                  <Icon name={n.partnerNotified ? 'check_circle' : 'forward_to_inbox'} size="16px" />
+                  {n.partnerNotified ? 'Recycling partner notified' : 'Notify recycling partner'}
                 </button>
                 <button className="btn-small" onClick={() => handleAcknowledge(n.id)}>
-                  ✓ পড়া হয়েছে
+                  <Icon name="check" size="16px" />
+                  Acknowledge
                 </button>
               </div>
             </div>
@@ -74,30 +89,15 @@ export default function DashboardPage() {
       )}
 
       <div className="stat-grid">
-        <div className="stat-card">
-          <p className="stat-label">মোট ইউজার</p>
-          <p className="stat-value">{stats?.totalUsers ?? 0}</p>
-        </div>
-        <div className="stat-card">
-          <p className="stat-label">মোট মেশিন</p>
-          <p className="stat-value">{stats?.totalMachines ?? 0}</p>
-        </div>
-        <div className="stat-card">
-          <p className="stat-label">সক্রিয় মেশিন</p>
-          <p className="stat-value">{stats?.activeMachines ?? 0}</p>
-        </div>
-        <div className="stat-card">
-          <p className="stat-label">মোট স্ক্যান</p>
-          <p className="stat-value">{stats?.totalScans ?? 0}</p>
-        </div>
-        <div className="stat-card highlight">
-          <p className="stat-label">মোট জমাকৃত বোতল</p>
-          <p className="stat-value">{stats?.totalBottlesDeposited ?? 0}</p>
-        </div>
-        <div className="stat-card warning">
-          <p className="stat-label">পেন্ডিং সতর্কতা</p>
-          <p className="stat-value">{stats?.pendingAlerts ?? 0}</p>
-        </div>
+        {STAT_ITEMS.map((item) => (
+          <div className={`stat-card ${item.variant || ''}`} key={item.key}>
+            <div className="stat-card-icon">
+              <Icon name={item.icon} />
+            </div>
+            <p className="stat-label">{item.label}</p>
+            <p className="stat-value">{stats?.[item.key] ?? 0}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

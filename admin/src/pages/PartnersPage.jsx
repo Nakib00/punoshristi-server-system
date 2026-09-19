@@ -7,6 +7,7 @@ import {
   removePartnerOffer,
   updatePartner,
 } from '../api';
+import Icon from '../components/Icon';
 
 const EMPTY_FORM = { name: '', category: '', address: '', hours: '', rating: 4.5, distanceKm: '', featured: false };
 const EMPTY_OFFER = { title: '', pointsCost: 300, icon: 'redeem' };
@@ -35,7 +36,7 @@ export default function PartnersPage() {
     e.preventDefault();
     setError('');
     if (!form.name.trim() || !form.category.trim()) {
-      setError('পার্টনারের নাম ও ক্যাটাগরি আবশ্যক');
+      setError('Partner name and category are required');
       return;
     }
     setSubmitting(true);
@@ -48,7 +49,7 @@ export default function PartnersPage() {
       setShowForm(false);
       load();
     } catch (err) {
-      setError(err?.response?.data?.message || 'পার্টনার তৈরি করা যায়নি');
+      setError(err?.response?.data?.message || 'Could not create the partner');
     } finally {
       setSubmitting(false);
     }
@@ -60,7 +61,7 @@ export default function PartnersPage() {
   }
 
   async function handleDelete(partner) {
-    if (!confirm(`${partner.name} মুছে ফেলতে চান?`)) return;
+    if (!confirm(`Delete ${partner.name}?`)) return;
     await deletePartner(partner.id);
     load();
   }
@@ -78,14 +79,15 @@ export default function PartnersPage() {
     load();
   }
 
-  if (loading) return <p className="loading-text">লোড হচ্ছে...</p>;
+  if (loading) return <p className="loading-text">Loading...</p>;
 
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">পার্টনার ও অফার ({partners.length})</h1>
+        <h1 className="page-title">Partners & Offers ({partners.length})</h1>
         <button className="btn-primary" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? 'বাতিল' : '+ নতুন পার্টনার যোগ করুন'}
+          <Icon name={showForm ? 'close' : 'add'} size="18px" />
+          {showForm ? 'Cancel' : 'Add New Partner'}
         </button>
       </div>
 
@@ -93,27 +95,27 @@ export default function PartnersPage() {
         <form className="inline-form" onSubmit={handleCreate}>
           <div className="form-row">
             <label>
-              পার্টনারের নাম
+              Partner name
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="যেমন: Green Sprout Cafe"
+                placeholder="e.g. Green Sprout Cafe"
               />
             </label>
             <label>
-              ক্যাটাগরি
+              Category
               <input
                 type="text"
                 value={form.category}
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                placeholder="যেমন: Cafe, Grocery, Fashion"
+                placeholder="e.g. Cafe, Grocery, Fashion"
               />
             </label>
           </div>
           <div className="form-row">
             <label>
-              ঠিকানা
+              Address
               <input
                 type="text"
                 value={form.address}
@@ -121,18 +123,18 @@ export default function PartnersPage() {
               />
             </label>
             <label>
-              খোলার সময়
+              Opening hours
               <input
                 type="text"
                 value={form.hours}
                 onChange={(e) => setForm((f) => ({ ...f, hours: e.target.value }))}
-                placeholder="যেমন: Open until 9:00 PM"
+                placeholder="e.g. Open until 9:00 PM"
               />
             </label>
           </div>
           <div className="form-row">
             <label>
-              দূরত্ব (কিমি, ঐচ্ছিক)
+              Distance (km, optional)
               <input
                 type="number"
                 step="any"
@@ -140,53 +142,63 @@ export default function PartnersPage() {
                 onChange={(e) => setForm((f) => ({ ...f, distanceKm: e.target.value }))}
               />
             </label>
-            <label>
+            <label className="ad-checkbox-label" style={{ alignSelf: 'center' }}>
               <input
                 type="checkbox"
                 checked={form.featured}
                 onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))}
-              />{' '}
-              ফিচার্ড ডিল (Partners পেজের ব্যানারে দেখাবে)
+              />
+              Featured deal (shows on the Partners page banner)
             </label>
           </div>
           {error && <p className="form-error">{error}</p>}
           <button type="submit" className="btn-primary" disabled={submitting}>
-            {submitting ? 'সংরক্ষণ হচ্ছে...' : 'পার্টনার সংরক্ষণ করুন'}
+            {submitting ? 'Saving...' : 'Save Partner'}
           </button>
         </form>
       )}
 
       <div className="machine-grid">
         {partners.length === 0 ? (
-          <p className="loading-text">কোনো পার্টনার নেই। উপরে ক্লিক করে একটি যোগ করুন।</p>
+          <p className="loading-text">No partners yet. Click above to add one.</p>
         ) : (
           partners.map((p) => (
             <div className="machine-card" key={p.id}>
               <div className="machine-card-header">
                 <h3>{p.name}</h3>
-                {p.featured && <span className="status-badge warning">⭐ ফিচার্ড</span>}
+                {p.featured && (
+                  <span className="status-badge warning">
+                    <Icon name="star" filled />
+                    Featured
+                  </span>
+                )}
               </div>
-              <p className="machine-location">🏷️ {p.category}</p>
+              <p className="machine-location">
+                <Icon name="sell" />
+                {p.category}
+              </p>
               {p.address && <p className="machine-address">{p.address}</p>}
               <p className="machine-meta">
-                ⭐ {p.rating} {p.distanceKm != null ? `• ${p.distanceKm}km` : ''} {p.hours ? `• ${p.hours}` : ''}
+                <Icon name="star" filled size="14px" style={{ verticalAlign: 'text-bottom' }} /> {p.rating}{' '}
+                {p.distanceKm != null ? `• ${p.distanceKm}km` : ''} {p.hours ? `• ${p.hours}` : ''}
               </p>
 
               <div className="capacity-bar-wrap">
-                <p className="capacity-text">অফারসমূহ:</p>
-                {(p.offers || []).length === 0 && <p className="machine-meta">কোনো অফার নেই</p>}
+                <p className="capacity-text">Offers:</p>
+                {(p.offers || []).length === 0 && <p className="machine-meta">No offers yet</p>}
                 {(p.offers || []).map((o) => (
                   <p key={o.id} className="machine-meta">
                     • {o.title} — {o.pointsCost} pts{' '}
                     <button className="btn-small btn-danger" onClick={() => handleRemoveOffer(p.id, o.id)}>
-                      মুছুন
+                      <Icon name="delete" size="14px" />
+                      Remove
                     </button>
                   </p>
                 ))}
                 <div className="form-row">
                   <input
                     type="text"
-                    placeholder="অফারের নাম"
+                    placeholder="Offer name"
                     value={offerForms[p.id]?.title ?? ''}
                     onChange={(e) =>
                       setOfferForms((f) => ({ ...f, [p.id]: { ...(f[p.id] || EMPTY_OFFER), title: e.target.value } }))
@@ -194,7 +206,7 @@ export default function PartnersPage() {
                   />
                   <input
                     type="number"
-                    placeholder="পয়েন্ট"
+                    placeholder="Points"
                     value={offerForms[p.id]?.pointsCost ?? ''}
                     onChange={(e) =>
                       setOfferForms((f) => ({
@@ -205,16 +217,19 @@ export default function PartnersPage() {
                   />
                 </div>
                 <button className="btn-small" onClick={() => handleAddOffer(p.id)}>
-                  + অফার যোগ করুন
+                  <Icon name="add" size="16px" />
+                  Add Offer
                 </button>
               </div>
 
               <div className="machine-actions">
                 <button className="btn-small" onClick={() => handleToggleFeatured(p)}>
-                  {p.featured ? 'ফিচার্ড বাতিল করুন' : 'ফিচার্ড করুন'}
+                  <Icon name={p.featured ? 'star_border' : 'star'} size="16px" />
+                  {p.featured ? 'Unfeature' : 'Feature'}
                 </button>
                 <button className="btn-small btn-danger" onClick={() => handleDelete(p)}>
-                  মুছুন
+                  <Icon name="delete" size="16px" />
+                  Delete
                 </button>
               </div>
             </div>

@@ -11,7 +11,7 @@ import './App.css';
 
 export default function App() {
   const { loading } = useAdminAuth();
-  if (loading) return <div className="loading-screen">লোড হচ্ছে...</div>;
+  if (loading) return <div className="loading-screen">Loading...</div>;
 
   return (
     <Routes>

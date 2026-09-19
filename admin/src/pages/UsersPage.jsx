@@ -3,7 +3,7 @@ import { fetchUsers } from '../api';
 
 function formatDate(iso) {
   if (!iso) return '-';
-  return new Date(iso).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export default function UsersPage() {
@@ -17,28 +17,28 @@ export default function UsersPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="loading-text">লোড হচ্ছে...</p>;
+  if (loading) return <p className="loading-text">Loading...</p>;
 
   return (
     <div>
-      <h1 className="page-title">ইউজারগণ ({users.length})</h1>
+      <h1 className="page-title">Users ({users.length})</h1>
 
       <div className="table-wrap">
         <table className="data-table">
           <thead>
             <tr>
-              <th>নাম</th>
-              <th>ইমেইল</th>
-              <th>ফোন</th>
-              <th>মোট পয়েন্ট (বোতল)</th>
-              <th>মোট স্ক্যান</th>
-              <th>রেজিস্ট্রেশনের তারিখ</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Bottles Deposited</th>
+              <th>Total Scans</th>
+              <th>Registered On</th>
             </tr>
           </thead>
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="empty-cell">কোনো ইউজার নেই</td>
+                <td colSpan={6} className="empty-cell">No users yet</td>
               </tr>
             ) : (
               users.map((u) => (

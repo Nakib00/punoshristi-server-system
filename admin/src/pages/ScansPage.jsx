@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchScans } from '../api';
 
 function formatDateTime(iso) {
-  return new Date(iso).toLocaleString('bn-BD', {
+  return new Date(iso).toLocaleString('en-US', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -19,28 +19,28 @@ export default function ScansPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="loading-text">লোড হচ্ছে...</p>;
+  if (loading) return <p className="loading-text">Loading...</p>;
 
   return (
     <div>
-      <h1 className="page-title">জমার ইতিহাস ({scans.length})</h1>
+      <h1 className="page-title">Deposit History ({scans.length})</h1>
 
       <div className="table-wrap">
         <table className="data-table">
           <thead>
             <tr>
-              <th>সময়</th>
-              <th>ইউজার</th>
-              <th>ইমেইল</th>
-              <th>মেশিন</th>
-              <th>লোকেশন</th>
-              <th>বোতল</th>
+              <th>Time</th>
+              <th>User</th>
+              <th>Email</th>
+              <th>Machine</th>
+              <th>Location</th>
+              <th>Bottles</th>
             </tr>
           </thead>
           <tbody>
             {scans.length === 0 ? (
               <tr>
-                <td colSpan={6} className="empty-cell">এখনো কোনো জমা হয়নি</td>
+                <td colSpan={6} className="empty-cell">No deposits yet</td>
               </tr>
             ) : (
               scans.map((s) => (
