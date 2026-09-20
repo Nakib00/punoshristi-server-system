@@ -560,6 +560,8 @@
   box-shadow: 0 1px 2px rgba(12, 36, 21, 0.05), 0 8px 20px rgba(12, 36, 21, 0.04);
   border: 1px solid #eef1ee;
   border-left: 4px solid #22c55e;
+  display: flex;
+  flex-direction: column;
 }
 
 .machine-card.warning {
@@ -686,4 +688,131 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f2f0;
+}
+
+.machine-actions .btn-small {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ===== Partner offers ===== */
+.offer-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f2f0;
+  flex: 1;
+}
+
+.offer-section-title {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+}
+
+.offer-empty-hint {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.offer-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.offer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f9fafb;
+  border: 1px solid #eef1ee;
+  border-radius: 8px;
+  padding: 8px 8px 8px 12px;
+}
+
+.offer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.offer-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f2933;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.offer-points {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1a5c2a;
+  background: #dcfce7;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.icon-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: #fee2e2;
+  color: #b91c1c;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.12s ease;
+}
+
+.icon-btn-danger:hover {
+  background: #fecaca;
+}
+
+.offer-add-form {
+  display: flex;
+  gap: 8px;
+}
+
+.offer-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #d1d5db;
+  font-family: inherit;
+  background: #fff;
+  color: #1c1b1b;
+}
+
+.offer-input:focus {
+  outline: none;
+  border-color: #1f6f43;
+}
+
+.offer-input-points {
+  flex: 0 0 76px;
+}
+
+.offer-add-btn {
+  flex-shrink: 0;
 }

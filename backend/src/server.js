@@ -78,6 +78,9 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Bottle deposit backend listening on http://0.0.0.0:${PORT}`);
+// No host given: Node binds the IPv6 wildcard ("::") with dual-stack enabled
+// on Windows/Linux, so both "localhost" (which often resolves to ::1 first)
+// and LAN clients hitting the machine's real IPv4 address both work.
+server.listen(PORT, () => {
+  console.log(`Bottle deposit backend listening on port ${PORT}`);
 });

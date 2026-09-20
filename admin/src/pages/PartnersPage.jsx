@@ -183,20 +183,32 @@ export default function PartnersPage() {
                 {p.distanceKm != null ? `• ${p.distanceKm}km` : ''} {p.hours ? `• ${p.hours}` : ''}
               </p>
 
-              <div className="capacity-bar-wrap">
-                <p className="capacity-text">Offers:</p>
-                {(p.offers || []).length === 0 && <p className="machine-meta">No offers yet</p>}
-                {(p.offers || []).map((o) => (
-                  <p key={o.id} className="machine-meta">
-                    • {o.title} — {o.pointsCost} pts{' '}
-                    <button className="btn-small btn-danger" onClick={() => handleRemoveOffer(p.id, o.id)}>
-                      <Icon name="delete" size="14px" />
-                      Remove
-                    </button>
-                  </p>
-                ))}
-                <div className="form-row">
+              <div className="offer-section">
+                <p className="offer-section-title">Offers</p>
+                {(p.offers || []).length === 0 && <p className="offer-empty-hint">No offers yet</p>}
+                {(p.offers || []).length > 0 && (
+                  <ul className="offer-list">
+                    {(p.offers || []).map((o) => (
+                      <li key={o.id} className="offer-row">
+                        <span className="offer-info">
+                          <span className="offer-title">{o.title}</span>
+                          <span className="offer-points">{o.pointsCost} pts</span>
+                        </span>
+                        <button
+                          className="icon-btn-danger"
+                          title="Remove offer"
+                          aria-label="Remove offer"
+                          onClick={() => handleRemoveOffer(p.id, o.id)}
+                        >
+                          <Icon name="delete" size="16px" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="offer-add-form">
                   <input
+                    className="offer-input"
                     type="text"
                     placeholder="Offer name"
                     value={offerForms[p.id]?.title ?? ''}
@@ -205,6 +217,7 @@ export default function PartnersPage() {
                     }
                   />
                   <input
+                    className="offer-input offer-input-points"
                     type="number"
                     placeholder="Points"
                     value={offerForms[p.id]?.pointsCost ?? ''}
@@ -215,11 +228,11 @@ export default function PartnersPage() {
                       }))
                     }
                   />
+                  <button className="btn-small offer-add-btn" onClick={() => handleAddOffer(p.id)}>
+                    <Icon name="add" size="16px" />
+                    Add
+                  </button>
                 </div>
-                <button className="btn-small" onClick={() => handleAddOffer(p.id)}>
-                  <Icon name="add" size="16px" />
-                  Add Offer
-                </button>
               </div>
 
               <div className="machine-actions">

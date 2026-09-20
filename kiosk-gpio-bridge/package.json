@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "onoff": "^6.0.3",
     "socket.io": "^4.7.5"
+  },
+  "optionalDependencies": {
+    "onoff": "^6.0.3"
   }
 }
