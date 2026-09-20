@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="1000" height="620" fill="#fcf9f8"/>
+  <text x="500" y="34" text-anchor="middle" font-size="22" font-weight="700" fill="#004317">Punoshristi — Two-Computer Testing Setup (Same Wi-Fi)</text>
+  <text x="500" y="56" text-anchor="middle" font-size="13" fill="#40493f">Backend PC + Kiosk Laptop (with Arduino) + phones, all on one Wi-Fi router — no internet required</text>
+
+  <!-- Router -->
+  <g>
+    <rect x="410" y="90" width="180" height="80" rx="12" fill="#0c2415" stroke="#004317" stroke-width="2"/>
+    <text x="500" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">Wi-Fi Router</text>
+    <text x="500" y="140" text-anchor="middle" font-size="10" fill="#93d697">Home / office Wi-Fi</text>
+    <text x="500" y="156" text-anchor="middle" font-size="10" fill="#93d697">e.g. 192.168.0.1</text>
+  </g>
+
+  <!-- Backend PC -->
+  <g>
+    <rect x="80" y="240" width="280" height="200" rx="14" fill="#1a5c2a" stroke="#004317" stroke-width="2"/>
+    <text x="220" y="270" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Backend PC</text>
+    <text x="220" y="288" text-anchor="middle" font-size="10" fill="#c9e8d0">Its LAN IP, e.g. 192.168.0.10</text>
+
+    <rect x="100" y="304" width="240" height="30" rx="6" fill="#eaf7ef"/>
+    <text x="220" y="323" text-anchor="middle" font-size="11" fill="#004317">backend — :4000 (API + Socket.IO)</text>
+
+    <rect x="100" y="342" width="240" height="30" rx="6" fill="#eaf7ef"/>
+    <text x="220" y="361" text-anchor="middle" font-size="11" fill="#004317">admin — :5182 (staff dashboard)</text>
+
+    <rect x="100" y="380" width="240" height="30" rx="6" fill="#eaf7ef"/>
+    <text x="220" y="399" text-anchor="middle" font-size="11" fill="#004317">user-web — :5181 (optional here)</text>
+
+    <text x="220" y="424" text-anchor="middle" font-size="9" fill="#c9e8d0">Stays on and reachable the whole test</text>
+  </g>
+
+  <!-- Kiosk Laptop -->
+  <g>
+    <rect x="640" y="240" width="280" height="240" rx="14" fill="#00838f" stroke="#004d54" stroke-width="2"/>
+    <text x="780" y="270" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Kiosk Laptop</text>
+    <text x="780" y="288" text-anchor="middle" font-size="10" fill="#c7f0f2">Its LAN IP, e.g. 192.168.0.25</text>
+
+    <rect x="660" y="304" width="240" height="30" rx="6" fill="#eafcfd"/>
+    <text x="780" y="323" text-anchor="middle" font-size="11" fill="#004d54">web — :5173 (kiosk screen, ads + QR)</text>
+
+    <rect x="660" y="342" width="240" height="30" rx="6" fill="#eafcfd"/>
+    <text x="780" y="361" text-anchor="middle" font-size="11" fill="#004d54">kiosk-gpio-bridge — :5055 (local only)</text>
+
+    <text x="780" y="392" text-anchor="middle" font-size="9" fill="#e0f7fa">web's .env → VITE_API_BASE_URL points</text>
+    <text x="780" y="405" text-anchor="middle" font-size="9" fill="#e0f7fa">at the Backend PC's IP, not localhost</text>
+
+    <!-- Arduino attached -->
+    <rect x="700" y="420" width="160" height="44" rx="8" fill="#ffffff" stroke="#004d54" stroke-width="2"/>
+    <text x="780" y="438" text-anchor="middle" font-size="10" font-weight="700" fill="#004317">Arduino (USB)</text>
+    <text x="780" y="453" text-anchor="middle" font-size="9" fill="#40493f">Start/Stop buttons + IR sensor</text>
+  </g>
+  <line x1="780" y1="420" x2="780" y2="480" stroke="#004d54" stroke-width="2"/>
+
+  <!-- Phone -->
+  <g>
+    <rect x="410" y="500" width="180" height="90" rx="14" fill="#ffffff" stroke="#1a5c2a" stroke-width="2"/>
+    <text x="500" y="526" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">User's Phone</text>
+    <text x="500" y="544" text-anchor="middle" font-size="10" fill="#40493f">Browser opens https://&lt;Backend PC IP&gt;:5181</text>
+    <text x="500" y="560" text-anchor="middle" font-size="10" fill="#40493f">(or user-web can run on the laptop too)</text>
+    <text x="500" y="576" text-anchor="middle" font-size="10" fill="#40493f">Scans the QR the kiosk laptop shows</text>
+  </g>
+
+  <!-- connections -->
+  <line x1="220" y1="240" x2="450" y2="170" stroke="#1a5c2a" stroke-width="2"/>
+  <line x1="780" y1="240" x2="550" y2="170" stroke="#00838f" stroke-width="2"/>
+  <line x1="500" y1="500" x2="500" y2="170" stroke="#1a5c2a" stroke-width="2" stroke-dasharray="4 3"/>
+
+  <text x="335" y="200" font-size="10" fill="#40493f">Wi-Fi</text>
+  <text x="600" y="200" font-size="10" fill="#40493f">Wi-Fi</text>
+  <text x="505" y="340" font-size="10" fill="#40493f">Wi-Fi</text>
+
+  <!-- notes -->
+  <g font-size="11" fill="#40493f">
+    <text x="60" y="600" font-weight="700" fill="#004317">Rule of thumb:</text>
+    <text x="180" y="600">Only "localhost" needs to change to the Backend PC's real IP — everything else about each app stays the same.</text>
+  </g>
+</svg>

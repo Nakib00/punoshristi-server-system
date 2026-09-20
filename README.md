@@ -38,7 +38,7 @@ You do **not** need a Raspberry Pi, a real RVM machine, or any hardware to try t
 | [`web/`](web/) | The screen that sits on the physical machine ("the kiosk"). Plays ads, counts bottles, shows the QR code. | `http://localhost:5173` | [web/README.md](web/README.md) |
 | [`user-web/`](user-web/) | The app a normal person opens **on their own phone** — sign up, scan the QR, see points, find machines on a map, redeem offers. Works in English or Bangla. | `https://localhost:5181` | [user-web/README.md](user-web/README.md) |
 | [`admin/`](admin/) | The staff/owner dashboard — add machines, upload ads, manage partners and users. | `http://localhost:5182` | [admin/README.md](admin/README.md) |
-| [`kiosk-gpio-bridge/`](kiosk-gpio-bridge/) | Only needed on a **real Raspberry Pi** — reads the physical Start/Stop buttons and the bottle sensor. On a normal laptop it pretends to be the hardware so you can still test everything with your keyboard. | `http://localhost:5055` | [kiosk-gpio-bridge/README.md](kiosk-gpio-bridge/README.md) |
+| [`kiosk-gpio-bridge/`](kiosk-gpio-bridge/) | Reads the physical Start/Stop buttons and the bottle sensor — via real GPIO on a **Raspberry Pi**, via an **Arduino over USB** (a laptop stand-in for testing, see [Section 7.9](#79-testing-setup-laptop--arduino-backend-on-a-second-pc-no-pi-yet)), or a keyboard simulator with no hardware at all. | `http://localhost:5055` | [kiosk-gpio-bridge/README.md](kiosk-gpio-bridge/README.md) |
 | `mobile/` | Not used anymore — `user-web` replaced it, since it needs no install at all. | — | — |
 
 ---
@@ -314,7 +314,36 @@ This works like Facebook Ads scheduling — the backend checks all of these rule
 
 `kiosk-gpio-bridge` automatically drops into **keyboard-simulator mode** on any computer that isn't a real Raspberry Pi (see [Step 3 in Section 4](#step-3--hardware-bridge-kiosk-gpio-bridge--optional-on-a-laptop)) — so the entire Start → count → Stop → QR flow can be tested with just a keyboard, no soldering required.
 
-### 7.8 Hardware troubleshooting
+### 7.9 Testing setup: laptop + Arduino, backend on a second PC (no Pi yet)
+
+A step up from the keyboard simulator, for when you have real buttons/an IR sensor wired to an Arduino but not yet a Raspberry Pi: the Arduino plugs into a laptop over USB, and that laptop runs both the kiosk screen and the hardware bridge, while `backend` (and usually `admin`) run on a separate PC — both machines just need to be on the **same Wi-Fi network**.
+
+![Network topology](docs/network-topology-laptop-test.svg)
+
+**On the laptop that will be the kiosk:**
+1. Wire the Arduino per [`docs/circuit-diagram-arduino.svg`](docs/circuit-diagram-arduino.svg) and the pin table below, and flash [`kiosk-gpio-bridge/arduino/punoshristi_kiosk_bridge.ino`](kiosk-gpio-bridge/arduino/punoshristi_kiosk_bridge.ino) onto it with the Arduino IDE.
+2. `cd kiosk-gpio-bridge && npm install && cp .env.example .env`, then set `ARDUINO_PORT` to whatever the Arduino enumerated as (`COM3` on Windows, `/dev/ttyACM0` on Linux, `/dev/cu.usbmodem...` on Mac — check the Arduino IDE's Tools → Port menu), and run `npm start`. Confirm with `curl http://localhost:5055/health` → `{"mode":"arduino"}`.
+3. Find the **backend PC's** LAN IP (see [Section 5, Step A](#5-opening-the-user-app-on-your-phone) — same technique, just run it on the other machine), then in `web/.env` on this laptop set:
+   ```
+   VITE_API_BASE_URL=http://<backend-PC-IP>:4000/api
+   ```
+   This single line covers both jobs this laptop needs from the backend — fetching the ad playlist and sending the finished QR/session data — since `web` derives the ad-media URLs from the same address. `VITE_GPIO_BRIDGE_URL` stays `http://localhost:5055` (the Arduino bridge is local to this laptop, never over the network).
+4. `cd web && npm install && npm run dev`, then open the printed local URL. This one laptop now plays ads *and* counts bottles from the Arduino at the same time — that's the existing `web` state machine (idle/ads → counting → QR), unchanged from the Pi version.
+
+**On the other PC:** just run `backend` (and `admin` if you want the dashboard there too) as in [Section 4](#4-running-everything-on-your-computer-step-by-step) — nothing about them changes for this setup.
+
+#### Arduino wiring (digital pin numbers)
+
+| Function | Arduino pin | Notes |
+| --- | --- | --- |
+| Start button | D2 | Other leg → GND. Uses D2's internal pull-up — no resistor needed |
+| Stop button | D3 | Same pattern, D3 |
+| IR sensor OUT | D4 | Sensor VCC→5V, GND→GND, OUT→D4 |
+| Buzzer + (optional) | D8 | Buzzer − to GND |
+
+Full detail (serial protocol, fallback behavior, troubleshooting): [`kiosk-gpio-bridge/README.md` § Arduino mode](kiosk-gpio-bridge/README.md#arduino-mode-laptop-testing-setup).
+
+### 7.10 Hardware troubleshooting
 
 | Problem | Fix |
 | --- | --- |
@@ -323,6 +352,8 @@ This works like Facebook Ads scheduling — the backend checks all of these rule
 | Buttons don't respond | Check the pull-down resistor wiring and that pin numbers in `.env` match your actual wiring |
 | GPIO errors (`EACCES` / `EBUSY`) | Reboot the Pi — another process may still be holding the pins |
 | Ad videos don't autoplay | Confirm `--autoplay-policy=no-user-gesture-required` is in the Chromium launch command |
+| Arduino mode falls back to "simulated" | Wrong `ARDUINO_PORT`, the Arduino IDE's Serial Monitor is still holding the port open (close it), or the sketch wasn't flashed — check the bridge's terminal log for the exact reason |
+| Kiosk laptop can't reach the ads/QR (Arduino setup) | Confirm `web/.env`'s `VITE_API_BASE_URL` uses the backend PC's real LAN IP (not `localhost`), both machines are on the same Wi-Fi, and you restarted `npm run dev` after editing `.env` |
 
 ---
 
@@ -386,7 +417,7 @@ Every sub-project has its own `.env` file (not tracked by git) — see each one'
 | --- | --- |
 | `backend` | `PORT`, `JWT_SECRET`, `ADMIN_JWT_SECRET`, `ADMIN_EMAIL` / `ADMIN_PASSWORD` |
 | `web` (kiosk) | `VITE_API_BASE_URL`, `VITE_GPIO_BRIDGE_URL`, `VITE_MACHINE_ID` |
-| `kiosk-gpio-bridge` | `START_BUTTON_PIN`, `STOP_BUTTON_PIN`, `IR_SENSOR_PIN`, `BUZZER_PIN`, `IR_ACTIVE_LOW` |
+| `kiosk-gpio-bridge` | `ARDUINO_PORT` (laptop+Arduino testing), `START_BUTTON_PIN`, `STOP_BUTTON_PIN`, `IR_SENSOR_PIN`, `BUZZER_PIN`, `IR_ACTIVE_LOW` |
 | `user-web` | `VITE_API_BASE_URL`, `VITE_SOCKET_URL` (both must use your computer's real IP address for phone access — see [Section 5](#5-opening-the-user-app-on-your-phone)) |
 | `admin` | `VITE_API_BASE_URL`, `VITE_SOCKET_URL` |
 

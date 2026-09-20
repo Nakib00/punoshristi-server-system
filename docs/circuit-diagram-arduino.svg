@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 760" font-family="Segoe UI, Arial, sans-serif">
+  <rect width="1000" height="760" fill="#fcf9f8"/>
+  <text x="500" y="34" text-anchor="middle" font-size="22" font-weight="700" fill="#004317">Punoshristi RVM — Arduino Wiring Diagram (Laptop Testing Setup)</text>
+  <text x="500" y="56" text-anchor="middle" font-size="13" fill="#40493f">Arduino Uno / Nano · digital pin numbering · internal pull-ups (no resistors needed for the buttons)</text>
+
+  <!-- Arduino board -->
+  <g>
+    <rect x="60" y="110" width="260" height="420" rx="14" fill="#00838f" stroke="#004d54" stroke-width="2"/>
+    <text x="190" y="140" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff">Arduino Uno / Nano</text>
+    <text x="190" y="160" text-anchor="middle" font-size="11" fill="#c7f0f2">Runs punoshristi_kiosk_bridge.ino</text>
+
+    <!-- USB port -->
+    <rect x="80" y="480" width="90" height="26" rx="4" fill="#eafcfd" stroke="#004d54"/>
+    <text x="125" y="497" text-anchor="middle" font-size="10" fill="#004d54">USB (data)</text>
+
+    <!-- pin header block -->
+    <rect x="255" y="185" width="20" height="270" fill="#00565e" stroke="#8fe0e6"/>
+    <g font-size="11" fill="#1c1b1b">
+      <text x="330" y="200">5V &#8592; IR sensor VCC</text>
+      <line x1="275" y1="196" x2="320" y2="196" stroke="#f2c94c" stroke-width="2"/>
+
+      <text x="330" y="230">GND &#8592; common ground rail</text>
+      <line x1="275" y1="226" x2="320" y2="226" stroke="#333333" stroke-width="2"/>
+
+      <text x="330" y="260">D2 &#8592; Start button</text>
+      <line x1="275" y1="256" x2="320" y2="256" stroke="#56ccf2" stroke-width="2"/>
+
+      <text x="330" y="290">D3 &#8592; Stop button</text>
+      <line x1="275" y1="286" x2="320" y2="286" stroke="#eb5757" stroke-width="2"/>
+
+      <text x="330" y="320">D4 &#8592; IR sensor OUT</text>
+      <line x1="275" y1="316" x2="320" y2="316" stroke="#9b51e0" stroke-width="2"/>
+
+      <text x="330" y="350">D8 &#8592; Buzzer + (optional)</text>
+      <line x1="275" y1="346" x2="320" y2="346" stroke="#f2994a" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- USB to laptop -->
+  <g>
+    <rect x="60" y="560" width="260" height="90" rx="10" fill="#ffffff" stroke="#004d54" stroke-width="2"/>
+    <text x="190" y="588" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">USB &#8594; Laptop</text>
+    <text x="190" y="606" text-anchor="middle" font-size="10" fill="#40493f">Laptop runs kiosk-gpio-bridge</text>
+    <text x="190" y="622" text-anchor="middle" font-size="10" fill="#40493f">(ARDUINO_PORT=COM..) + the</text>
+    <text x="190" y="638" text-anchor="middle" font-size="10" fill="#40493f">kiosk web app, both on this laptop</text>
+  </g>
+  <line x1="125" y1="506" x2="125" y2="560" stroke="#004d54" stroke-width="2"/>
+
+  <!-- Start Button -->
+  <g>
+    <rect x="620" y="150" width="180" height="90" rx="10" fill="#ffffff" stroke="#56ccf2" stroke-width="2"/>
+    <text x="710" y="178" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">START Button</text>
+    <text x="710" y="196" text-anchor="middle" font-size="10" fill="#40493f">Momentary, normally-open</text>
+    <text x="710" y="212" text-anchor="middle" font-size="10" fill="#40493f">Leg A &#8594; D2 · Leg B &#8594; GND</text>
+    <text x="710" y="228" text-anchor="middle" font-size="10" fill="#40493f">Uses D2's internal INPUT_PULLUP</text>
+  </g>
+
+  <!-- Stop Button -->
+  <g>
+    <rect x="620" y="260" width="180" height="90" rx="10" fill="#ffffff" stroke="#eb5757" stroke-width="2"/>
+    <text x="710" y="288" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">STOP Button</text>
+    <text x="710" y="306" text-anchor="middle" font-size="10" fill="#40493f">Momentary, normally-open</text>
+    <text x="710" y="322" text-anchor="middle" font-size="10" fill="#40493f">Leg A &#8594; D3 · Leg B &#8594; GND</text>
+    <text x="710" y="338" text-anchor="middle" font-size="10" fill="#40493f">Uses D3's internal INPUT_PULLUP</text>
+  </g>
+
+  <!-- IR sensor -->
+  <g>
+    <rect x="620" y="370" width="180" height="100" rx="10" fill="#ffffff" stroke="#9b51e0" stroke-width="2"/>
+    <text x="710" y="396" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">IR Obstacle Sensor</text>
+    <text x="710" y="412" text-anchor="middle" font-size="10" fill="#40493f">(e.g. FC-51 / LM393 module)</text>
+    <text x="710" y="430" text-anchor="middle" font-size="10" fill="#40493f">VCC &#8594; 5V · GND &#8594; GND</text>
+    <text x="710" y="446" text-anchor="middle" font-size="10" fill="#40493f">OUT &#8594; D4</text>
+    <text x="710" y="462" text-anchor="middle" font-size="10" fill="#40493f">Aim across the bottle drop chute</text>
+  </g>
+
+  <!-- Buzzer -->
+  <g>
+    <rect x="620" y="490" width="180" height="70" rx="10" fill="#ffffff" stroke="#f2994a" stroke-width="2"/>
+    <text x="710" y="514" text-anchor="middle" font-size="13" font-weight="700" fill="#004317">Buzzer (optional)</text>
+    <text x="710" y="532" text-anchor="middle" font-size="10" fill="#40493f">+ &#8594; D8 · &#8722; &#8594; GND</text>
+    <text x="710" y="548" text-anchor="middle" font-size="10" fill="#40493f">Beep feedback on button/bottle</text>
+  </g>
+
+  <!-- connecting lines -->
+  <line x1="320" y1="196" x2="620" y2="400" stroke="#f2c94c" stroke-width="2"/>
+  <line x1="320" y1="256" x2="620" y2="195" stroke="#56ccf2" stroke-width="2"/>
+  <line x1="320" y1="286" x2="620" y2="305" stroke="#eb5757" stroke-width="2"/>
+  <line x1="320" y1="316" x2="620" y2="420" stroke="#9b51e0" stroke-width="2"/>
+  <line x1="320" y1="346" x2="620" y2="525" stroke="#f2994a" stroke-width="2"/>
+  <line x1="320" y1="226" x2="620" y2="440" stroke="#333333" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+  <!-- legend -->
+  <g font-size="11" fill="#40493f">
+    <text x="60" y="700" font-weight="700" fill="#004317">Legend</text>
+    <line x1="60" y1="712" x2="90" y2="712" stroke="#56ccf2" stroke-width="3"/><text x="96" y="716">Start signal</text>
+    <line x1="60" y1="728" x2="90" y2="728" stroke="#eb5757" stroke-width="3"/><text x="96" y="732">Stop signal</text>
+    <line x1="60" y1="744" x2="90" y2="744" stroke="#9b51e0" stroke-width="3"/><text x="96" y="748">IR sensor signal</text>
+    <line x1="220" y1="712" x2="250" y2="712" stroke="#f2994a" stroke-width="3"/><text x="256" y="716">Buzzer (optional)</text>
+    <line x1="220" y1="728" x2="250" y2="728" stroke="#f2c94c" stroke-width="3"/><text x="256" y="732">5V power</text>
+    <line x1="220" y1="744" x2="250" y2="744" stroke="#333333" stroke-width="2" stroke-dasharray="3 3"/><text x="256" y="748">Ground</text>
+  </g>
+
+  <text x="500" y="738" text-anchor="middle" font-size="11" fill="#717a6f">
+    Sketch: kiosk-gpio-bridge/arduino/punoshristi_kiosk_bridge.ino · Bridge setup: kiosk-gpio-bridge/README.md § Arduino mode
+  </text>
+</svg>

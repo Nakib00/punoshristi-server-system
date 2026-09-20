@@ -2,15 +2,18 @@
 // sensor) to the kiosk web app over a local, loopback-only WebSocket.
 //
 // The kiosk UI runs in a normal Chromium browser tab, which has no access
-// to GPIO — so this small Node daemon owns the hardware and the browser
-// just listens for events. Run this with `npm start` on the Raspberry Pi
-// itself (see the systemd unit in this folder for auto-start on boot).
+// to GPIO or serial ports — so this small Node daemon owns the hardware and
+// the browser just listens for events. Three interchangeable hardware
+// backends are supported (the kiosk web app doesn't know or care which one
+// is active, since all three just emit the same start/stop/bottle events):
 //
-// On any machine that isn't a Raspberry Pi (or when the GPIO pins can't be
-// exported, e.g. while developing on a laptop), this automatically falls
-// back to a keyboard simulator so the rest of the system stays testable
-// without hardware: press s / x / b + Enter in this terminal to simulate
-// Start / Stop / one bottle.
+//   1. Raspberry Pi GPIO   — the real RVM, pins read via `onoff`.
+//   2. Arduino over USB    — a laptop standing in for the Pi during testing
+//      (see the "arduino/" sketch in this folder); set ARDUINO_PORT to
+//      enable this mode.
+//   3. Keyboard simulator  — automatic fallback when neither of the above
+//      is available, so the whole system stays testable with zero hardware:
+//      press s / x / b + Enter in this terminal for Start / Stop / one bottle.
 require('dotenv').config();
 
 const http = require('http');
@@ -24,11 +27,13 @@ const BUZZER_PIN = process.env.BUZZER_PIN ? Number(process.env.BUZZER_PIN) : nul
 const IR_ACTIVE_LOW = String(process.env.IR_ACTIVE_LOW ?? 'true') === 'true';
 const IR_DEBOUNCE_MS = Number(process.env.IR_DEBOUNCE_MS) || 300;
 const BUTTON_DEBOUNCE_MS = Number(process.env.BUTTON_DEBOUNCE_MS) || 50;
+const ARDUINO_PORT = process.env.ARDUINO_PORT || null;
+const ARDUINO_BAUD_RATE = Number(process.env.ARDUINO_BAUD_RATE) || 9600;
 
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', mode: hardwareMode ? 'gpio' : 'simulated' }));
+    res.end(JSON.stringify({ status: 'ok', mode: hardwareMode }));
     return;
   }
   res.writeHead(404);
@@ -39,7 +44,7 @@ const server = http.createServer((req, res) => {
 // control should never be reachable from the LAN.
 const io = new Server(server, { cors: { origin: '*' } });
 
-let hardwareMode = false;
+let hardwareMode = 'simulated';
 
 function broadcast(event, payload) {
   console.log(`[gpio-bridge] ${event}`, payload || '');
@@ -98,15 +103,70 @@ function startHardwareMode() {
   process.on('SIGINT', cleanup);
   process.on('SIGTERM', cleanup);
 
-  hardwareMode = true;
+  hardwareMode = 'gpio';
   console.log(
     `[gpio-bridge] GPIO mode: start=GPIO${START_BUTTON_PIN} stop=GPIO${STOP_BUTTON_PIN} ir=GPIO${IR_SENSOR_PIN}` +
       (BUZZER_PIN !== null ? ` buzzer=GPIO${BUZZER_PIN}` : '')
   );
 }
 
+// Arduino mode: a laptop stands in for the Raspberry Pi during testing. The
+// Arduino sketch in arduino/punoshristi_kiosk_bridge.ino reads the same
+// buttons/IR sensor and just prints "START"/"STOP"/"BOTTLE" lines over USB
+// serial — this function is the other half, turning those lines back into
+// the same broadcast() events the GPIO and simulator modes emit, so the
+// kiosk web app can't tell the difference.
+function startArduinoMode() {
+  // eslint-disable-next-line global-require
+  const { SerialPort } = require('serialport');
+  // eslint-disable-next-line global-require
+  const { ReadlineParser } = require('@serialport/parser-readline');
+
+  const port = new SerialPort({ path: ARDUINO_PORT, baudRate: ARDUINO_BAUD_RATE, autoOpen: false });
+
+  port.open((err) => {
+    if (err) {
+      startSimulatedMode(`Could not open Arduino serial port ${ARDUINO_PORT} (${err.message})`);
+      return;
+    }
+
+    hardwareMode = 'arduino';
+    console.log(`[gpio-bridge] Arduino mode: listening on ${ARDUINO_PORT} @ ${ARDUINO_BAUD_RATE} baud`);
+
+    const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
+    let lastBottleAt = 0;
+
+    parser.on('data', (lineRaw) => {
+      const line = String(lineRaw).trim().toUpperCase();
+      if (line === 'START') broadcast('start');
+      else if (line === 'STOP') broadcast('stop');
+      else if (line === 'BOTTLE') {
+        const now = Date.now();
+        if (now - lastBottleAt < IR_DEBOUNCE_MS) return; // ignore sensor bounce
+        lastBottleAt = now;
+        broadcast('bottle');
+      }
+    });
+
+    port.on('error', (serialErr) => {
+      console.error('[gpio-bridge] Arduino serial error', serialErr.message);
+    });
+
+    const cleanup = () => {
+      try {
+        port.close();
+      } catch {
+        /* ignore */
+      }
+      process.exit(0);
+    };
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+  });
+}
+
 function startSimulatedMode(reason) {
-  hardwareMode = false;
+  hardwareMode = 'simulated';
   console.log(`[gpio-bridge] Falling back to keyboard simulator (${reason}).`);
   console.log('[gpio-bridge] In this terminal: type "s" + Enter = Start, "x" + Enter = Stop, "b" + Enter = one bottle.');
 
@@ -119,12 +179,22 @@ function startSimulatedMode(reason) {
   });
 }
 
-try {
-  startHardwareMode();
-} catch (err) {
-  startSimulatedMode(err.message);
+// ARDUINO_PORT set → Arduino mode (falls back to the simulator asynchronously
+// if the port can't be opened). Otherwise, try real Pi GPIO, and fall back to
+// the simulator synchronously if that throws (e.g. `onoff` unavailable).
+if (ARDUINO_PORT) {
+  startArduinoMode();
+} else {
+  try {
+    startHardwareMode();
+  } catch (err) {
+    startSimulatedMode(err.message);
+  }
 }
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[gpio-bridge] Listening on http://127.0.0.1:${PORT} (mode: ${hardwareMode ? 'gpio' : 'simulated'})`);
+  // Arduino mode opens its serial port asynchronously and logs its own
+  // confirmation line once ready, so `hardwareMode` here may still briefly
+  // read its starting value — check GET /health for the current, accurate mode.
+  console.log(`[gpio-bridge] Listening on http://127.0.0.1:${PORT} (mode: ${hardwareMode})`);
 });
