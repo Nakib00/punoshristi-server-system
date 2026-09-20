@@ -168,8 +168,14 @@ function startArduinoMode() {
 function startSimulatedMode(reason) {
   hardwareMode = 'simulated';
   console.log(`[gpio-bridge] Falling back to keyboard simulator (${reason}).`);
-  console.log('[gpio-bridge] In this terminal: type "s" + Enter = Start, "x" + Enter = Stop, "b" + Enter = one bottle.');
+}
 
+// Keyboard override: always listening in this terminal, no matter which
+// hardware mode ends up active. This matters when only *some* hardware is
+// wired up yet — e.g. a real Arduino + IR sensor but no buttons — so Start/
+// Stop can be triggered by hand while the real sensor drives bottle counts.
+function attachKeyboardOverride() {
+  console.log('[gpio-bridge] Manual override (always available): type "s" + Enter = Start, "x" + Enter = Stop, "b" + Enter = one bottle.');
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', (chunk) => {
     const key = chunk.trim().toLowerCase();
@@ -178,6 +184,8 @@ function startSimulatedMode(reason) {
     else if (key === 'b') broadcast('bottle');
   });
 }
+
+attachKeyboardOverride();
 
 // ARDUINO_PORT set → Arduino mode (falls back to the simulator asynchronously
 // if the port can't be opened). Otherwise, try real Pi GPIO, and fall back to

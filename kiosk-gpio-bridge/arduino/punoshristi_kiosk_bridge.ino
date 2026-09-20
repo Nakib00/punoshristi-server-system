@@ -46,7 +46,13 @@ void setup() {
   Serial.begin(9600);
   pinMode(START_PIN, INPUT_PULLUP);
   pinMode(STOP_PIN, INPUT_PULLUP);
-  pinMode(IR_PIN, INPUT);
+  // INPUT_PULLUP (not plain INPUT) so this pin has a defined resting state
+  // even if the sensor's OUT wire is a simple transistor output rather than
+  // an actively-driven comparator — without this, a disconnected/loose OUT
+  // wire (or some simple non-LM393 IR modules) leaves the pin floating,
+  // which reads as rapid random noise and fires false "bottle" events
+  // continuously. Harmless to leave on even with a proper comparator module.
+  pinMode(IR_PIN, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);
   lastIrState = digitalRead(IR_PIN);
 }
