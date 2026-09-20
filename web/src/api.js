@@ -34,6 +34,25 @@ export const GPIO_BRIDGE_URL = import.meta.env.VITE_GPIO_BRIDGE_URL || 'http://l
 
 export const api = axios.create({ baseURL });
 
+// This is a local-network dev server (see README) — on some machines the
+// very first request on a fresh connection intermittently gets reset at
+// the OS/network level before it ever reaches Express (confirmed: retried
+// requests are never double-processed server-side). One silent retry on a
+// pure network error (no response at all — a real 4xx/5xx never retries)
+// smooths that over instead of surfacing a scary error on the kiosk screen.
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+    if (!error.response && config && !config.__retried) {
+      config.__retried = true;
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      return api(config);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export function mediaUrl(path) {
   return `${BACKEND_ORIGIN}${path}`;
 }
